@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "Helpdesk Sentiment API",
+    "description": "CRUD tests for the Helpdesk Sentiment Web API. Start the app (http profile, port 5153) before running. Uses HTTP Basic auth with the demo users from appsettings.json.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      { "key": "username", "value": "{{username}}", "type": "string" },
+      { "key": "password", "value": "{{password}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5153" },
+    { "key": "username", "value": "admin" },
+    { "key": "password", "value": "Admin@123" },
+    { "key": "callId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Analyse text (no auth)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"I am not happy, the internet is very slow again!\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/sentiment/analyze", "host": ["{{baseUrl}}"], "path": ["api", "sentiment", "analyze"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Detected negative', () => pm.expect(pm.response.json().label).to.eql('Negative'));"
+      ] } }]
+    },
+    {
+      "name": "Get all calls without credentials (expect 401)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/calls", "host": ["{{baseUrl}}"], "path": ["api", "calls"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "Get all calls",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/calls", "host": ["{{baseUrl}}"], "path": ["api", "calls"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Returns an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "Get negative calls (query string filter)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/calls?sentiment=Negative",
+          "host": ["{{baseUrl}}"], "path": ["api", "calls"],
+          "query": [{ "key": "sentiment", "value": "Negative" }]
+        }
+      }
+    },
+    {
+      "name": "Get summary",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/calls/summary", "host": ["{{baseUrl}}"], "path": ["api", "calls", "summary"] }
+      }
+    },
+    {
+      "name": "Create call",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"callerName\": \"Postman Caller\",\n  \"phoneNumber\": \"9800011122\",\n  \"category\": \"Billing\",\n  \"agentId\": 1,\n  \"transcript\": \"Thank you so much, the refund was quick and the agent was very polite.\",\n  \"durationSeconds\": 240\n}" },
+        "url": { "raw": "{{baseUrl}}/api/calls", "host": ["{{baseUrl}}"], "path": ["api", "calls"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('201 Created', () => pm.response.to.have.status(201));",
+        "const body = pm.response.json();",
+        "pm.collectionVariables.set('callId', body.id);",
+        "pm.test('Sentiment calculated by server', () => pm.expect(body.sentiment).to.eql('Positive'));"
+      ] } }]
+    },
+    {
+      "name": "Create call with invalid data (expect 400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"callerName\": \"X\",\n  \"phoneNumber\": \"123\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/calls", "host": ["{{baseUrl}}"], "path": ["api", "calls"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+      ] } }]
+    },
+    {
+      "name": "Get call by id",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/calls/{{callId}}", "host": ["{{baseUrl}}"], "path": ["api", "calls", "{{callId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));"
+      ] } }]
+    },
+    {
+      "name": "Update call",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"callerName\": \"Postman Caller\",\n  \"phoneNumber\": \"9800011122\",\n  \"category\": \"Billing\",\n  \"agentId\": 1,\n  \"transcript\": \"Actually the refund failed again, I am very angry now.\",\n  \"durationSeconds\": 240\n}" },
+        "url": { "raw": "{{baseUrl}}/api/calls/{{callId}}", "host": ["{{baseUrl}}"], "path": ["api", "calls", "{{callId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+      ] } }]
+    },
+    {
+      "name": "Delete call as agent (expect 403)",
+      "request": {
+        "auth": { "type": "basic", "basic": [
+          { "key": "username", "value": "agent", "type": "string" },
+          { "key": "password", "value": "Agent@123", "type": "string" }
+        ] },
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/api/calls/{{callId}}", "host": ["{{baseUrl}}"], "path": ["api", "calls", "{{callId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+      ] } }]
+    },
+    {
+      "name": "Delete call as admin",
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/api/calls/{{callId}}", "host": ["{{baseUrl}}"], "path": ["api", "calls", "{{callId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+      ] } }]
+    }
+  ]
+}

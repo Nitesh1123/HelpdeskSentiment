@@ -1,0 +1,16 @@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <div class="d-flex align-items-center gap-2">
+        <span class="navbar-text small">
+            @User.Identity.Name
+            <span class="badge bg-light text-dark border">@(User.IsInRole("Admin") ? "Admin" : "Agent")</span>
+        </span>
+        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Sign out</button>
+        </form>
+    </div>
+}
+else
+{
+    <a class="btn btn-sm btn-outline-primary" asp-controller="Account" asp-action="Login">Sign in</a>
+}

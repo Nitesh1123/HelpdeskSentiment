@@ -1,10 +1,13 @@
+using HelpdeskSentiment.Authentication;
 using HelpdeskSentiment.Models;
 using HelpdeskSentiment.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace HelpdeskSentiment.Controllers
 {
+    [Authorize]
     public class CallsController : Controller
     {
         private const string RecentCallsKey = "RecentCalls";
@@ -103,6 +106,7 @@ namespace HelpdeskSentiment.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             CallRecord? call = await _calls.GetByIdAsync(id);
@@ -115,6 +119,7 @@ namespace HelpdeskSentiment.Controllers
         }
 
         [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = Roles.Admin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {

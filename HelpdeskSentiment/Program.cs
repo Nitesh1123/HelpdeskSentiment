@@ -1,12 +1,18 @@
+using System.Text.Json.Serialization;
+using HelpdeskSentiment.Authentication;
 using HelpdeskSentiment.Data;
+using HelpdeskSentiment.Middleware;
 using HelpdeskSentiment.Services;
 using HelpdeskSentiment.Services.Sentiment;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddDbContext<HelpdeskDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HelpdeskDb")));
@@ -15,6 +21,19 @@ builder.Services.AddDbContext<HelpdeskDbContext>(options =>
 // the call service uses the DbContext so it lives for one request.
 builder.Services.AddSingleton<ISentimentAnalyzer, LexiconSentimentAnalyzer>();
 builder.Services.AddScoped<ICallService, CallService>();
+
+// Authentication: cookies for the MVC pages, HTTP Basic for the Web API.
+builder.Services.AddSingleton<IUserStore, ConfigUserStore>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    })
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(BasicAuthenticationHandler.SchemeName, null);
+builder.Services.AddAuthorization();
 
 // Session state (used for the "recently viewed calls" list).
 builder.Services.AddDistributedMemoryCache();
@@ -43,10 +62,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Middleware pipeline: order matters. Logging wraps everything after it,
+// authentication must run before authorization, and both after routing.
+app.UseRequestLogging();
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSession();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
