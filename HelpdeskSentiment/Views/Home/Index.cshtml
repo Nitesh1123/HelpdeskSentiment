@@ -1,8 +1,35 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="py-4">
+    <h1 class="display-6">Helpdesk call sentiment analysis</h1>
+    <p class="lead">Log incoming helpdesk calls, detect how the caller felt, and spot angry customers before they leave.</p>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Calls" asp-action="Create" class="btn btn-primary">Log a call</a>
+        <a asp-controller="Calls" asp-action="Index" class="btn btn-outline-primary">View calls</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">Dashboard</a>
+        <a asp-controller="Analyze" asp-action="Index" class="btn btn-outline-secondary">Try the analyser</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h2 class="h6">1. Log the call</h2>
+            <p class="small mb-0">The agent enters the caller details and a transcript or notes of what was said.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h2 class="h6">2. Sentiment is scored</h2>
+            <p class="small mb-0">A rule based analyser reads the words, handles “not good” and “very angry”, and gives a score from -1 to +1.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h2 class="h6">3. Supervisors act</h2>
+            <p class="small mb-0">Very negative calls, or calls mentioning a manager or legal action, are flagged for a call back.</p>
+        </div></div>
+    </div>
 </div>

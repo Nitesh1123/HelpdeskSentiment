@@ -1,0 +1,43 @@
+@model CallRecord
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="CallerName" class="form-label"></label>
+        <input asp-for="CallerName" class="form-control" />
+        <span asp-validation-for="CallerName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" maxlength="10" />
+        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Category" class="form-label"></label>
+        <select asp-for="Category" asp-items="Html.GetEnumSelectList<CallCategory>()" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AgentId" class="form-label"></label>
+        <select asp-for="AgentId" asp-items="ViewBag.Agents" class="form-select">
+            <option value="">-- select agent --</option>
+        </select>
+        <span asp-validation-for="AgentId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="CallTime" class="form-label"></label>
+        <input asp-for="CallTime" class="form-control" type="datetime-local" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="DurationSeconds" class="form-label"></label>
+        <input asp-for="DurationSeconds" class="form-control" />
+        <span asp-validation-for="DurationSeconds" class="text-danger small"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Transcript" class="form-label"></label>
+        <textarea asp-for="Transcript" class="form-control" rows="6"
+                  placeholder="Write what the caller said, e.g. 'My bill is wrong again, I am very upset...'"></textarea>
+        <span asp-validation-for="Transcript" class="text-danger small"></span>
+        <div class="form-text">Sentiment is calculated automatically from this text when you save.</div>
+    </div>
+</div>

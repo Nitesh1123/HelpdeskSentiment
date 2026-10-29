@@ -1,0 +1,16 @@
+@model SentimentLabel
+@{
+    string css = Model switch
+    {
+        SentimentLabel.Positive => "bg-success",
+        SentimentLabel.Negative => "bg-danger",
+        _ => "bg-secondary"
+    };
+    string icon = Model switch
+    {
+        SentimentLabel.Positive => "🙂",
+        SentimentLabel.Negative => "😠",
+        _ => "😐"
+    };
+}
+<span class="badge @css">@icon @Model</span>
