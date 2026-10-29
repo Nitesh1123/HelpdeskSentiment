@@ -1,9 +1,12 @@
+using HelpdeskSentiment.Authentication;
 using HelpdeskSentiment.Models;
 using HelpdeskSentiment.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpdeskSentiment.Controllers
 {
+    [Authorize(Roles = Roles.Admin)]
     public class DashboardController : Controller
     {
         private readonly ICallService _calls;
