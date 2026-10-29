@@ -1,0 +1,40 @@
+@model AnalyzeViewModel
+@{
+    ViewData["Title"] = "Analyse text";
+}
+
+<h1 class="h3 mb-1">@ViewData["Title"]</h1>
+<p class="text-muted">Try the sentiment engine on any sentence. Nothing is saved.</p>
+
+<form asp-action="Index" method="post">
+    <textarea asp-for="Text" class="form-control mb-2" rows="5"
+              placeholder="e.g. I am not happy, this is the third time my payment failed!"></textarea>
+    <span asp-validation-for="Text" class="text-danger small d-block mb-2"></span>
+    <button type="submit" class="btn btn-primary">Analyse</button>
+</form>
+
+@if (Model.Result != null)
+{
+    var r = Model.Result;
+    <div class="card mt-4">
+        <div class="card-body">
+            <h2 class="h5">
+                <partial name="_SentimentBadge" model="r.Label" />
+                <span class="ms-2">score @r.Score.ToString("+0.000;-0.000;0")</span>
+                @if (r.ShouldEscalate)
+                {
+                    <span class="badge bg-dark ms-2">Escalate</span>
+                }
+            </h2>
+            <p class="mb-1"><strong>Positive words:</strong>
+                @(r.PositiveWords.Count == 0 ? "none" : string.Join(", ", r.PositiveWords))</p>
+            <p class="mb-1"><strong>Negative words:</strong>
+                @(r.NegativeWords.Count == 0 ? "none" : string.Join(", ", r.NegativeWords))</p>
+            <p class="text-muted small mb-0">@r.TokenCount words read by the @ViewBag.AnalyzerName analyser.</p>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

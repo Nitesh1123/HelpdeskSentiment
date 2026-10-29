@@ -1,0 +1,115 @@
+@model List<CallRecord>
+@{
+    var byCategory = (Dictionary<string, int>)ViewBag.ByCategory;
+    var byAgent = (Dictionary<string, double>)ViewBag.ByAgent;
+}
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md">
+        <div class="card text-center"><div class="card-body">
+            <div class="text-muted small">Total calls</div>
+            <div class="fs-3 fw-semibold">@ViewData["TotalCalls"]</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md">
+        <div class="card text-center border-success"><div class="card-body">
+            <div class="text-muted small">Positive</div>
+            <div class="fs-3 fw-semibold text-success">@ViewBag.Positive</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md">
+        <div class="card text-center"><div class="card-body">
+            <div class="text-muted small">Neutral</div>
+            <div class="fs-3 fw-semibold">@ViewBag.Neutral</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md">
+        <div class="card text-center border-danger"><div class="card-body">
+            <div class="text-muted small">Negative</div>
+            <div class="fs-3 fw-semibold text-danger">@ViewBag.Negative</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md">
+        <div class="card text-center"><div class="card-body">
+            <div class="text-muted small">Average score</div>
+            <div class="fs-3 fw-semibold">@(((double)ViewData["AverageScore"]!).ToString("+0.00;-0.00;0.00"))</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header">Sentiment split</div>
+            <div class="card-body"><canvas id="sentimentChart" height="220"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header">Calls by category</div>
+            <div class="card-body"><canvas id="categoryChart" height="220"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header">Average caller mood per agent</div>
+            <table class="table mb-0">
+                @foreach (var pair in byAgent.OrderBy(p => p.Value))
+                {
+                    <tr>
+                        <td>@pair.Key</td>
+                        <td class="text-end @(pair.Value < 0 ? "text-danger" : "text-success")">@pair.Value.ToString("+0.00;-0.00;0.00")</td>
+                    </tr>
+                }
+            </table>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between">
+                <span>Needs call back (@ViewBag.Escalated escalated)</span>
+                <a asp-controller="Calls" asp-action="Index" asp-route-sentiment="Negative" class="small">all negative calls &rarr;</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                @if (Model.Count == 0)
+                {
+                    <li class="list-group-item text-muted">No escalated calls 🎉</li>
+                }
+                @foreach (var call in Model)
+                {
+                    <li class="list-group-item">
+                        <a asp-controller="Calls" asp-action="Details" asp-route-id="@call.Id">@call.CallerName</a>
+                        <span class="text-muted small">· @call.Category · @call.CallTime.ToString("dd MMM HH:mm")</span>
+                        <div class="small text-truncate">@call.Transcript</div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        new Chart(document.getElementById('sentimentChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{ data: [@ViewBag.Positive, @ViewBag.Neutral, @ViewBag.Negative],
+                             backgroundColor: ['#198754', '#6c757d', '#dc3545'] }]
+            }
+        });
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(byCategory.Keys)),
+                datasets: [{ label: 'Calls', data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(byCategory.Values)),
+                             backgroundColor: '#0d6efd' }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    </script>
+}

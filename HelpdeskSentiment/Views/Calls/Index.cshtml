@@ -1,0 +1,102 @@
+@model List<CallRecord>
+@{
+    var recent = (List<CallRecord>)ViewBag.RecentCalls;
+    SentimentLabel? selected = ViewBag.Sentiment;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Log new call</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-9">
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-sm-5">
+                <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name, phone or transcript" />
+            </div>
+            <div class="col-sm-4">
+                <select name="sentiment" class="form-select">
+                    <option value="">All sentiments</option>
+                    @foreach (SentimentLabel s in Enum.GetValues<SentimentLabel>())
+                    {
+                        <option value="@s" selected="@(selected == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-3 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary flex-fill">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-info">No calls found.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            <th>Caller</th>
+                            <th>Category</th>
+                            <th>Agent</th>
+                            <th>Sentiment</th>
+                            <th class="text-end">Score</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var call in Model)
+                        {
+                            <tr class="@(call.IsEscalated ? "table-danger" : "")">
+                                <td class="text-nowrap">@call.CallTime.ToString("dd MMM, HH:mm")</td>
+                                <td>
+                                    @call.CallerName
+                                    <div class="small text-muted">@call.PhoneNumber</div>
+                                </td>
+                                <td>@call.Category</td>
+                                <td>@(call.Agent?.Name ?? "—")</td>
+                                <td>
+                                    <partial name="_SentimentBadge" model="call.Sentiment" />
+                                    @if (call.IsEscalated)
+                                    {
+                                        <span class="badge bg-dark">Escalate</span>
+                                    }
+                                </td>
+                                <td class="text-end">@call.SentimentScore.ToString("+0.00;-0.00;0.00")</td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-action="Details" asp-route-id="@call.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                    <a asp-action="Edit" asp-route-id="@call.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small">@Model.Count call(s)</p>
+        }
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card">
+            <div class="card-header">Recently viewed</div>
+            <ul class="list-group list-group-flush">
+                @if (recent.Count == 0)
+                {
+                    <li class="list-group-item text-muted small">Calls you open are remembered here for this session.</li>
+                }
+                @foreach (var call in recent)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a asp-action="Details" asp-route-id="@call.Id">@call.CallerName</a>
+                        <partial name="_SentimentBadge" model="call.Sentiment" />
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

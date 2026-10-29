@@ -1,0 +1,16 @@
+@model CallRecord
+@{
+    ViewData["Title"] = "Delete call";
+}
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<div class="alert alert-warning">
+    Delete the call from <strong>@Model.CallerName</strong> on @Model.CallTime.ToString("dd MMM yyyy, HH:mm")?
+    This cannot be undone.
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+</form>

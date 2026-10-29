@@ -16,6 +16,15 @@ builder.Services.AddDbContext<HelpdeskDbContext>(options =>
 builder.Services.AddSingleton<ISentimentAnalyzer, LexiconSentimentAnalyzer>();
 builder.Services.AddScoped<ICallService, CallService>();
 
+// Session state (used for the "recently viewed calls" list).
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
 // Apply migrations and add sample data on startup.
@@ -36,6 +45,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseSession();
 
 app.UseAuthorization();
 
