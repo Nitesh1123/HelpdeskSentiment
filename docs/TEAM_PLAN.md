@@ -48,6 +48,7 @@ Syllabus: Unit III (MVC, Razor, layout, sections, ViewStart, ViewBag/ViewData, T
 - [x] “Recently viewed calls” stored in **Session**
 - [x] `_Layout.cshtml` with navbar, `@RenderSection("Scripts")`, `_ViewStart`, `_ViewImports`, partial view for the sentiment badge
 - [x] “Analyse text” playground page (paste text → see score and matched words)
+- [x] User Account Registration: `AccountController.Register`, `RegisterViewModel` (data annotations, password match, duplicate username validation), instant cookie sign-in, and auto-sync with `Agent` database entity
 
 ## Member 3 — Security, Middleware & Web API (`feature/api-auth`)
 

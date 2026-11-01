@@ -22,13 +22,16 @@ namespace HelpdeskSentiment.Authentication
         AppUser? Validate(string username, string password);
         ClaimsPrincipal CreatePrincipal(AppUser user, string authenticationScheme);
         IReadOnlyList<AppUser> GetAll();
+        bool UserExists(string username);
+        AppUser CreateUser(string username, string password, string displayName, string role = Roles.Agent);
     }
 
     // Demo users are read from the "DemoUsers" section of appsettings.json.
-    // A real system would store hashed passwords in the database (e.g. ASP.NET Core Identity).
+    // In-memory registration allows adding accounts during runtime.
     public class ConfigUserStore : IUserStore
     {
         private readonly List<AppUser> _users;
+        private readonly object _lock = new();
 
         public ConfigUserStore(IConfiguration configuration)
         {
@@ -42,13 +45,54 @@ namespace HelpdeskSentiment.Authentication
             }
         }
 
-        public IReadOnlyList<AppUser> GetAll() => _users.AsReadOnly();
+        public IReadOnlyList<AppUser> GetAll()
+        {
+            lock (_lock)
+            {
+                return _users.ToList().AsReadOnly();
+            }
+        }
 
         public AppUser? Validate(string username, string password)
         {
-            return _users.FirstOrDefault(u =>
-                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase) &&
-                u.Password == password);
+            lock (_lock)
+            {
+                return _users.FirstOrDefault(u =>
+                    string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase) &&
+                    u.Password == password);
+            }
+        }
+
+        public bool UserExists(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return false;
+            }
+
+            lock (_lock)
+            {
+                return _users.Any(u =>
+                    string.Equals(u.Username, username.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public AppUser CreateUser(string username, string password, string displayName, string role = Roles.Agent)
+        {
+            lock (_lock)
+            {
+                int nextId = _users.Count > 0 ? _users.Max(u => u.Id) + 1 : 1;
+                var newUser = new AppUser
+                {
+                    Id = nextId,
+                    Username = username.Trim(),
+                    Password = password,
+                    DisplayName = string.IsNullOrWhiteSpace(displayName) ? username.Trim() : displayName.Trim(),
+                    Role = string.IsNullOrWhiteSpace(role) ? Roles.Agent : role
+                };
+                _users.Add(newUser);
+                return newUser;
+            }
         }
 
         public ClaimsPrincipal CreatePrincipal(AppUser user, string authenticationScheme)
