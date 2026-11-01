@@ -27,3 +27,4 @@ namespace HelpdeskSentiment.Models
         public string? Username { get; set; }
     }
 }
+

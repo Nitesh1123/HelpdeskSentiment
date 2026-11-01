@@ -26,6 +26,12 @@
                         await window.Clerk.load();
                         clerkInstance = window.Clerk;
                         console.log('Clerk SDK loaded successfully.');
+                        if (clerkInstance.user) {
+                            const userBtn = document.getElementById('clerk-user-button');
+                            if (userBtn) {
+                                clerkInstance.mountUserButton(userBtn);
+                            }
+                        }
                     } catch (e) {
                         console.warn('Clerk SDK load note:', e.message);
                     }
@@ -208,3 +214,4 @@
         initClerk();
     }
 })();
+

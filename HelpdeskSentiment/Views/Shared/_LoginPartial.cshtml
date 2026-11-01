@@ -1,9 +1,10 @@
 @if (User.Identity?.IsAuthenticated == true)
 {
     <div class="d-flex align-items-center gap-2">
+        <div id="clerk-user-button" class="d-inline-flex align-items-center"></div>
         <span class="navbar-text small">
-            @User.Identity.Name
-            <span class="badge bg-light text-dark border">@(User.IsInRole("Admin") ? "Admin" : "Agent")</span>
+            <i class="bi bi-person-circle me-1 text-primary"></i>@User.Identity.Name
+            <span class="badge bg-light text-dark border ms-1">@(User.IsInRole("Admin") ? "Admin" : "Agent")</span>
         </span>
         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
             <button type="submit" class="btn btn-sm btn-outline-secondary">Sign out</button>
