@@ -1,0 +1,24 @@
+================================================================
+           Helpdesk Sentiment Web API Test Suite Results
+================================================================
+Executed at: 2026-11-01 10:12:53
+Target Base URL: http://localhost:5153
+
+
+TestName                            Method Endpoint          Expected Actual Result
+--------                            ------ --------          -------- ------ ------
+Calls - Unauthenticated             GET    /api/calls             401    401 PASS  
+Calls - Get All (Admin)             GET    /api/calls             200    200 PASS  
+Calls - Create Call (Admin)         POST   /api/calls             201    201 PASS  
+Calls - Get By ID                   GET    /api/calls/8           200    200 PASS  
+Calls - Update Call                 PUT    /api/calls/8           204    204 PASS  
+Calls - Invalid Body                POST   /api/calls             400    400 PASS  
+Calls - Missing ID                  GET    /api/calls/999999      404    404 PASS  
+Calls - Delete as Agent (Forbidden) DELETE /api/calls/8           403    403 PASS  
+Calls - Delete as Admin             DELETE /api/calls/8           204    204 PASS  
+Agents - Unauthenticated            GET    /api/agents            401    401 PASS  
+Agents - Get as Agent (Forbidden)   GET    /api/agents            403    403 PASS  
+Agents - Get as Admin               GET    /api/agents            200    200 PASS  
+
+
+
