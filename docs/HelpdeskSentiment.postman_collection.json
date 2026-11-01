@@ -144,6 +144,42 @@
       "event": [{ "listen": "test", "script": { "exec": [
         "pm.test('204 No Content', () => pm.response.to.have.status(204));"
       ] } }]
+    },
+    {
+      "name": "Get agents without credentials (expect 401)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "Get agents as agent (expect 403)",
+      "request": {
+        "auth": { "type": "basic", "basic": [
+          { "key": "username", "value": "agent", "type": "string" },
+          { "key": "password", "value": "Agent@123", "type": "string" }
+        ] },
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+      ] } }]
+    },
+    {
+      "name": "Get agents as admin",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Returns an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
     }
   ]
 }
