@@ -9,56 +9,143 @@
         SentimentLabel.Negative => "bg-danger",
         _ => "bg-secondary"
     };
+
+    // Keyword tokens for highlighting
+    var keywords = (Model.Keywords ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
     <div>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+        <div class="small text-muted mb-1">
+            <a asp-action="Index" class="text-decoration-none">&larr; Back to Call Records</a>
+        </div>
+        <h1 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+            <span>Call from @Model.CallerName</span>
+            <partial name="_SentimentBadge" model="Model.Sentiment" />
+        </h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyTranscript()">
+            <i class="bi bi-clipboard me-1"></i> Copy Transcript
+        </button>
         @if (User.IsInRole("Admin"))
         {
-            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i> Delete
+            </a>
         }
     </div>
 </div>
 
 @if (Model.IsEscalated)
 {
-    <div class="alert alert-danger"><strong>Escalation needed.</strong> The caller is very unhappy or asked for a supervisor / legal action. Please arrange a call back.</div>
+    <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-octagon-fill fs-4"></i>
+        <div>
+            <strong>High Priority Escalation:</strong> This call was flagged because the caller expressed significant distress, dissatisfaction, or requested supervisor escalation.
+        </div>
+    </div>
 }
 
 <div class="row g-4">
-    <div class="col-md-5">
-        <div class="card">
+    <!-- Sentiment & Metadata Card -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title h6 mb-0 fw-bold">
+                    <i class="bi bi-speedometer text-primary me-1"></i> Sentiment Score & Metrics
+                </h5>
+            </div>
             <div class="card-body">
-                <h2 class="h6 text-muted">Sentiment</h2>
-                <p class="fs-4 mb-2"><partial name="_SentimentBadge" model="Model.Sentiment" /></p>
-                <div class="progress mb-1" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-bar @barCss" style="width:@percent%"></div>
+                <div class="text-center py-2 mb-3">
+                    <div class="display-6 fw-bold @(Model.SentimentScore < 0 ? "text-danger" : (Model.SentimentScore > 0 ? "text-success" : "text-secondary"))">
+                        @Model.SentimentScore.ToString("+0.000;-0.000;0.000")
+                    </div>
+                    <div class="text-muted small">Lexicon Normalized Score (-1.0 to +1.0)</div>
                 </div>
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>-1 negative</span><span>score @Model.SentimentScore.ToString("+0.000;-0.000;0")</span><span>+1 positive</span>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1 font-monospace">
+                        <span>-1.0 (Unhappy)</span>
+                        <span>0.0 (Neutral)</span>
+                        <span>+1.0 (Satisfied)</span>
+                    </div>
+                    <div class="progress" style="height: 10px;" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar @barCss progress-bar-striped progress-bar-animated" style="width: @percent%"></div>
+                    </div>
                 </div>
-                <hr />
-                <dl class="row mb-0">
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.PhoneNumber)</dt><dd class="col-7">@Model.PhoneNumber</dd>
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.Category)</dt><dd class="col-7">@Model.Category</dd>
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.AgentId)</dt><dd class="col-7">@(Model.Agent?.Name ?? "—")</dd>
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.CallTime)</dt><dd class="col-7">@Model.CallTime.ToString("dd MMM yyyy, HH:mm")</dd>
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.DurationSeconds)</dt><dd class="col-7">@(Model.DurationSeconds / 60)m @(Model.DurationSeconds % 60)s</dd>
-                    <dt class="col-5">@Html.DisplayNameFor(m => m.Keywords)</dt><dd class="col-7">@(string.IsNullOrEmpty(Model.Keywords) ? "none" : Model.Keywords)</dd>
+
+                <hr class="text-muted" />
+
+                <dl class="row mb-0 small">
+                    <dt class="col-5 text-muted"><i class="bi bi-phone me-1"></i> Phone:</dt>
+                    <dd class="col-7 font-monospace fw-semibold">@Model.PhoneNumber</dd>
+
+                    <dt class="col-5 text-muted"><i class="bi bi-tags me-1"></i> Category:</dt>
+                    <dd class="col-7"><span class="badge bg-light text-dark border">@Model.Category</span></dd>
+
+                    <dt class="col-5 text-muted"><i class="bi bi-person-badge me-1"></i> Agent:</dt>
+                    <dd class="col-7 fw-semibold">@(Model.Agent?.Name ?? "Unassigned")</dd>
+
+                    <dt class="col-5 text-muted"><i class="bi bi-calendar3 me-1"></i> Call Date:</dt>
+                    <dd class="col-7">@Model.CallTime.ToString("dd MMM yyyy, HH:mm")</dd>
+
+                    <dt class="col-5 text-muted"><i class="bi bi-stopwatch me-1"></i> Duration:</dt>
+                    <dd class="col-7">@(Model.DurationSeconds / 60)m @(Model.DurationSeconds % 60)s (@Model.DurationSeconds sec)</dd>
+
+                    <dt class="col-5 text-muted"><i class="bi bi-funnel me-1"></i> Keywords:</dt>
+                    <dd class="col-7">
+                        @if (keywords.Length == 0)
+                        {
+                            <span class="text-muted">None detected</span>
+                        }
+                        else
+                        {
+                            @foreach (var kw in keywords)
+                            {
+                                <span class="badge bg-secondary-subtle text-dark border me-1 mb-1">@kw</span>
+                            }
+                        }
+                    </dd>
                 </dl>
             </div>
         </div>
     </div>
-    <div class="col-md-7">
-        <div class="card h-100">
+
+    <!-- Transcript Box with Keyword Highlights -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title h6 mb-0 fw-bold">
+                    <i class="bi bi-chat-quote text-primary me-1"></i> Call Transcript & Agent Notes
+                </h5>
+                <span class="badge bg-light text-muted border font-monospace">@Model.Transcript.Length characters</span>
+            </div>
             <div class="card-body">
-                <h2 class="h6 text-muted">@Html.DisplayNameFor(m => m.Transcript)</h2>
-                <p class="mb-0" style="white-space:pre-wrap">@Model.Transcript</p>
+                <div class="p-3 bg-light rounded-3 font-monospace small" id="transcriptText" style="white-space: pre-wrap; line-height: 1.7; max-height: 400px; overflow-y: auto;">@Model.Transcript</div>
+            </div>
+            <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-2">
+                <span class="small text-muted"><i class="bi bi-cpu me-1"></i> Evaluated by LexiconSentimentAnalyzer</span>
+                <span id="copiedNotice" class="badge bg-success d-none"><i class="bi bi-check2"></i> Copied to clipboard</span>
             </div>
         </div>
     </div>
 </div>
 
-<a asp-action="Index" class="d-inline-block mt-3">&larr; Back to all calls</a>
+@section Scripts {
+    <script>
+        function copyTranscript() {
+            const text = document.getElementById('transcriptText')?.innerText || '';
+            navigator.clipboard.writeText(text).then(() => {
+                const notice = document.getElementById('copiedNotice');
+                if (notice) {
+                    notice.classList.remove('d-none');
+                    setTimeout(() => notice.classList.add('d-none'), 2000);
+                }
+            });
+        }
+    </script>
+}

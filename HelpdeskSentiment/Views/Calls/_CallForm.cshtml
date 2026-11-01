@@ -1,43 +1,193 @@
 @model CallRecord
 
-<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<div asp-validation-summary="ModelOnly" class="alert alert-danger shadow-sm mb-3"></div>
 
 <div class="row g-3">
     <div class="col-md-6">
-        <label asp-for="CallerName" class="form-label"></label>
-        <input asp-for="CallerName" class="form-control" />
+        <label asp-for="CallerName" class="form-label">
+            <i class="bi bi-person me-1 text-primary"></i> @Html.DisplayNameFor(m => m.CallerName)
+        </label>
+        <input asp-for="CallerName" class="form-control" placeholder="e.g. Rahul Sharma" />
         <span asp-validation-for="CallerName" class="text-danger small"></span>
     </div>
+
     <div class="col-md-6">
-        <label asp-for="PhoneNumber" class="form-label"></label>
-        <input asp-for="PhoneNumber" class="form-control" maxlength="10" />
+        <label asp-for="PhoneNumber" class="form-label">
+            <i class="bi bi-phone me-1 text-primary"></i> @Html.DisplayNameFor(m => m.PhoneNumber)
+        </label>
+        <input asp-for="PhoneNumber" class="form-control" maxlength="10" placeholder="10-digit mobile, e.g. 9876543210" />
         <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
     </div>
+
     <div class="col-md-4">
-        <label asp-for="Category" class="form-label"></label>
+        <label asp-for="Category" class="form-label">
+            <i class="bi bi-tags me-1 text-primary"></i> @Html.DisplayNameFor(m => m.Category)
+        </label>
         <select asp-for="Category" asp-items="Html.GetEnumSelectList<CallCategory>()" class="form-select"></select>
     </div>
+
     <div class="col-md-4">
-        <label asp-for="AgentId" class="form-label"></label>
+        <label asp-for="AgentId" class="form-label">
+            <i class="bi bi-headset me-1 text-primary"></i> @Html.DisplayNameFor(m => m.AgentId)
+        </label>
         <select asp-for="AgentId" asp-items="ViewBag.Agents" class="form-select">
-            <option value="">-- select agent --</option>
+            <option value="">-- Select Helpdesk Agent --</option>
         </select>
         <span asp-validation-for="AgentId" class="text-danger small"></span>
     </div>
+
     <div class="col-md-2">
-        <label asp-for="CallTime" class="form-label"></label>
+        <label asp-for="CallTime" class="form-label">
+            <i class="bi bi-calendar3 me-1 text-primary"></i> @Html.DisplayNameFor(m => m.CallTime)
+        </label>
         <input asp-for="CallTime" class="form-control" type="datetime-local" />
     </div>
+
     <div class="col-md-2">
-        <label asp-for="DurationSeconds" class="form-label"></label>
-        <input asp-for="DurationSeconds" class="form-control" />
+        <label asp-for="DurationSeconds" class="form-label">
+            <i class="bi bi-stopwatch me-1 text-primary"></i> @Html.DisplayNameFor(m => m.DurationSeconds)
+        </label>
+        <input asp-for="DurationSeconds" class="form-control" placeholder="Sec (e.g. 120)" />
         <span asp-validation-for="DurationSeconds" class="text-danger small"></span>
     </div>
+
     <div class="col-12">
-        <label asp-for="Transcript" class="form-label"></label>
-        <textarea asp-for="Transcript" class="form-control" rows="6"
-                  placeholder="Write what the caller said, e.g. 'My bill is wrong again, I am very upset...'"></textarea>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label asp-for="Transcript" class="form-label mb-0">
+                <i class="bi bi-chat-left-quote me-1 text-primary"></i> @Html.DisplayNameFor(m => m.Transcript)
+            </label>
+            <div class="d-flex align-items-center gap-1">
+                <span class="text-muted small me-1">Quick Sample:</span>
+                <span class="quick-chip" onclick="applySample('angry')">😡 Angry Bill</span>
+                <span class="quick-chip" onclick="applySample('happy')">😊 Happy Praise</span>
+                <span class="quick-chip" onclick="applySample('escalate')">⚠️ Escalation</span>
+                <span class="quick-chip" onclick="applySample('neutral')">📋 Inquiry</span>
+            </div>
+        </div>
+
+        <textarea asp-for="Transcript" id="callTranscript" class="form-control" rows="5"
+                  placeholder="Write or paste what the caller said during the call..."></textarea>
         <span asp-validation-for="Transcript" class="text-danger small"></span>
-        <div class="form-text">Sentiment is calculated automatically from this text when you save.</div>
+
+        <!-- Live interactive estimator preview -->
+        <div class="card mt-2 border-0 bg-light p-2">
+            <div class="d-flex justify-content-between align-items-center small">
+                <div>
+                    <span class="text-muted">Live Sentiment Estimate: </span>
+                    <span id="liveSentimentBadge" class="badge bg-secondary">😐 Neutral</span>
+                    <span id="liveEscalateBadge" class="badge bg-danger d-none">⚠️ High Priority</span>
+                </div>
+                <div class="text-muted font-monospace">
+                    <span id="charCount">0</span> chars &bull; <span id="wordCount">0</span> words
+                </div>
+            </div>
+            <div id="detectedKeywords" class="small mt-1 text-muted" style="display:none;">
+                <span class="fw-semibold">Detected signals:</span> <span id="keywordPills"></span>
+            </div>
+        </div>
+        <div class="form-text small text-muted">
+            <i class="bi bi-info-circle me-1"></i> Exact sentiment score and database records are generated on the server when you save.
+        </div>
     </div>
 </div>
+
+<script>
+    const sampleTranscripts = {
+        angry: "My billing invoice is completely wrong again! This is the third time I am calling and nobody is solving it. I am very angry and frustrated with your terrible service!",
+        happy: "I called to thank the support team. Amit was very helpful, polite, and resolved my connection issue within minutes. Great experience, thank you!",
+        escalate: "I have waited two weeks for this refund and received nothing. I want to speak to your manager right now, or I will file a consumer court complaint and take legal action!",
+        neutral: "Hello, I am calling to check the working hours of your technical branch and verify if my KYC document was submitted yesterday."
+    };
+
+    function applySample(type) {
+        const text = sampleTranscripts[type] || "";
+        const ta = document.getElementById('callTranscript');
+        if (ta) {
+            ta.value = text;
+            ta.dispatchEvent(new Event('input'));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const ta = document.getElementById('callTranscript');
+        const charCount = document.getElementById('charCount');
+        const wordCount = document.getElementById('wordCount');
+        const badge = document.getElementById('liveSentimentBadge');
+        const escalateBadge = document.getElementById('liveEscalateBadge');
+        const keywordBox = document.getElementById('detectedKeywords');
+        const keywordPills = document.getElementById('keywordPills');
+
+        const posWords = ['good', 'great', 'happy', 'thank', 'thanks', 'excellent', 'helpful', 'polite', 'best', 'resolved', 'awesome', 'love'];
+        const negWords = ['bad', 'worst', 'angry', 'terrible', 'upset', 'unhappy', 'frustrated', 'horrible', 'poor', 'rude', 'fail', 'failed', 'wrong', 'fraud'];
+        const escWords = ['manager', 'supervisor', 'legal', 'court', 'lawyer', 'complaint', 'police', 'sue', 'consumer'];
+
+        function updateLiveStats() {
+            if (!ta) return;
+            const text = ta.value;
+            if (charCount) charCount.innerText = text.length;
+
+            const words = text.trim() ? text.trim().split(/\s+/) : [];
+            if (wordCount) wordCount.innerText = words.length;
+
+            if (words.length === 0) {
+                if (badge) { badge.className = 'badge bg-secondary'; badge.innerText = '😐 Neutral'; }
+                if (escalateBadge) escalateBadge.classList.add('d-none');
+                if (keywordBox) keywordBox.style.display = 'none';
+                return;
+            }
+
+            const lower = text.toLowerCase();
+            let score = 0;
+            let matched = [];
+
+            posWords.forEach(w => {
+                if (lower.includes(w)) { score += 1; matched.push({ w, type: 'pos' }); }
+            });
+            negWords.forEach(w => {
+                if (lower.includes(w)) { score -= 1; matched.push({ w, type: 'neg' }); }
+            });
+
+            let shouldEscalate = false;
+            escWords.forEach(w => {
+                if (lower.includes(w)) { shouldEscalate = true; matched.push({ w, type: 'esc' }); }
+            });
+
+            if (score <= -2) shouldEscalate = true;
+
+            if (badge) {
+                if (score > 0) {
+                    badge.className = 'badge bg-success';
+                    badge.innerText = '🙂 Positive';
+                } else if (score < 0) {
+                    badge.className = 'badge bg-danger';
+                    badge.innerText = '😠 Negative';
+                } else {
+                    badge.className = 'badge bg-secondary';
+                    badge.innerText = '😐 Neutral';
+                }
+            }
+
+            if (escalateBadge) {
+                if (shouldEscalate) escalateBadge.classList.remove('d-none');
+                else escalateBadge.classList.add('d-none');
+            }
+
+            if (keywordBox && keywordPills) {
+                if (matched.length > 0) {
+                    keywordBox.style.display = 'block';
+                    keywordPills.innerHTML = matched.map(m => {
+                        let color = m.type === 'pos' ? 'bg-success' : (m.type === 'esc' ? 'bg-dark' : 'bg-danger');
+                        return `<span class="badge ${color} me-1">${m.w}</span>`;
+                    }).join('');
+                } else {
+                    keywordBox.style.display = 'none';
+                }
+            }
+        }
+
+        if (ta) {
+            ta.addEventListener('input', updateLiveStats);
+            updateLiveStats();
+        }
+    });
+</script>
