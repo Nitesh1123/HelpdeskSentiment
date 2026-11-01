@@ -53,13 +53,13 @@ Syllabus: Unit III (MVC, Razor, layout, sections, ViewStart, ViewBag/ViewData, T
 
 Syllabus: Unit IV (middleware pipeline, custom middleware, DI, authentication & authorization), Unit VI (REST, Web API, CRUD, routing, Postman).
 
-- [ ] Cookie **authentication**: `AccountController` Login/Logout, roles `Admin` and `Agent`, `[Authorize]` on MVC controllers,
+- [x] Cookie **authentication**: `AccountController` Login/Logout, roles `Admin` and `Agent`, `[Authorize]` on MVC controllers,
       `[Authorize(Roles="Admin")]` on Delete and Dashboard
-- [ ] **Custom middleware** `RequestLoggingMiddleware` (logs method, path, status, elapsed ms) + built‑in middleware ordering
-- [ ] **Basic authentication** handler for the API (`Authorization: Basic …`) — matches the practical in the syllabus
-- [ ] `api/calls` Web API with **attribute routing**: GET all, GET by id, POST, PUT, DELETE, plus `POST api/sentiment/analyze`
+- [x] **Custom middleware** `RequestLoggingMiddleware` (logs method, path, status, elapsed ms) + built‑in middleware ordering
+- [x] **Basic authentication** handler for the API (`Authorization: Basic …`) — matches the practical in the syllabus
+- [x] `api/calls` Web API with **attribute routing**: GET all, GET by id, POST, PUT, DELETE, plus `POST api/sentiment/analyze`
       and `GET api/calls/summary`
-- [ ] Postman collection in `docs/HelpdeskSentiment.postman_collection.json`
+- [x] Postman collection in `docs/HelpdeskSentiment.postman_collection.json`
 
 ## Timeline (1 day)
 

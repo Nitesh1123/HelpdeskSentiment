@@ -4,6 +4,7 @@ namespace HelpdeskSentiment.Authentication
 {
     public class AppUser
     {
+        public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
@@ -20,6 +21,7 @@ namespace HelpdeskSentiment.Authentication
     {
         AppUser? Validate(string username, string password);
         ClaimsPrincipal CreatePrincipal(AppUser user, string authenticationScheme);
+        IReadOnlyList<AppUser> GetAll();
     }
 
     // Demo users are read from the "DemoUsers" section of appsettings.json.
@@ -31,7 +33,16 @@ namespace HelpdeskSentiment.Authentication
         public ConfigUserStore(IConfiguration configuration)
         {
             _users = configuration.GetSection("DemoUsers").Get<List<AppUser>>() ?? new List<AppUser>();
+            for (int i = 0; i < _users.Count; i++)
+            {
+                if (_users[i].Id == 0)
+                {
+                    _users[i].Id = i + 1;
+                }
+            }
         }
+
+        public IReadOnlyList<AppUser> GetAll() => _users.AsReadOnly();
 
         public AppUser? Validate(string username, string password)
         {
