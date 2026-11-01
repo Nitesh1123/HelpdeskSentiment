@@ -4,16 +4,46 @@
 }
 
 <div class="row justify-content-center py-4">
-    <div class="col-md-6 col-lg-5 col-xl-4">
+    <div class="col-md-7 col-lg-5 col-xl-4">
         <div class="text-center mb-4">
             <div class="display-6 text-primary mb-2"><i class="bi bi-shield-lock"></i></div>
             <h1 class="h3 fw-bold text-dark mb-1">Helpdesk Sign In</h1>
-            <p class="text-muted small">Enter your authorized account credentials to continue.</p>
+            <p class="text-muted small">Sign in via multi-platform SSO or enter your credentials.</p>
         </div>
 
         <div class="card border-0 shadow-sm p-4">
+            <!-- Multi-Platform Social Login via Clerk -->
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-dark small fw-semibold">Multi-Platform Access</span>
+                <span class="clerk-badge"><i class="bi bi-lightning-charge-fill me-1"></i>Clerk Auth</span>
+            </div>
+
+            <div class="d-grid gap-2 mb-2">
+                <button type="button" class="btn-social" onclick="startClerkAuth('google')">
+                    <i class="bi bi-google text-danger fs-5"></i>
+                    <span>Continue with Google</span>
+                </button>
+                <button type="button" class="btn-social" onclick="startClerkAuth('github')">
+                    <i class="bi bi-github text-dark fs-5"></i>
+                    <span>Continue with GitHub</span>
+                </button>
+                <button type="button" class="btn-social" onclick="startClerkAuth('microsoft')">
+                    <i class="bi bi-microsoft text-primary fs-5"></i>
+                    <span>Continue with Microsoft</span>
+                </button>
+                <button type="button" class="btn-social btn-social-clerk" onclick="startClerkAuth('clerk')">
+                    <i class="bi bi-shield-lock-fill me-1"></i>
+                    <span>All SSO Options (Universal Clerk Modal)</span>
+                </button>
+            </div>
+
+            <div class="social-divider">
+                <span>or continue with password</span>
+            </div>
+
+            <!-- Standard Username / Password Form -->
             <form asp-action="Login" method="post">
-                <input type="hidden" asp-for="ReturnUrl" />
+                <input type="hidden" asp-for="ReturnUrl" id="ReturnUrl" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger shadow-sm mb-3"></div>
                 
                 <div class="mb-3">
@@ -62,9 +92,11 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        window.CLERK_PUBLISHABLE_KEY = '@(ViewBag.ClerkPublishableKey ?? "pk_test_Y2xlcmsuaGVscGRlc2suc2VudGltZW50LmRlbW8k")';
         function fillLogin(u, p) {
             document.getElementById('loginUsername').value = u;
             document.getElementById('loginPassword').value = p;
         }
     </script>
+    <script src="~/js/clerk-auth.js" asp-append-version="true"></script>
 }

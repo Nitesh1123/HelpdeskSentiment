@@ -14,11 +14,13 @@ namespace HelpdeskSentiment.Controllers
     {
         private readonly IUserStore _users;
         private readonly HelpdeskDbContext _db;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(IUserStore users, HelpdeskDbContext db)
+        public AccountController(IUserStore users, HelpdeskDbContext db, IConfiguration configuration)
         {
             _users = users;
             _db = db;
+            _configuration = configuration;
         }
 
         public IActionResult Login(string? returnUrl)
@@ -29,6 +31,7 @@ namespace HelpdeskSentiment.Controllers
             }
 
             ViewData["Title"] = "Sign in";
+            ViewBag.ClerkPublishableKey = _configuration["Clerk:PublishableKey"] ?? "pk_test_Y2xlcmsuaGVscGRlc2suc2VudGltZW50LmRlbW8k";
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
 
@@ -37,6 +40,7 @@ namespace HelpdeskSentiment.Controllers
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             ViewData["Title"] = "Sign in";
+            ViewBag.ClerkPublishableKey = _configuration["Clerk:PublishableKey"] ?? "pk_test_Y2xlcmsuaGVscGRlc2suc2VudGltZW50LmRlbW8k";
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -69,6 +73,7 @@ namespace HelpdeskSentiment.Controllers
             }
 
             ViewData["Title"] = "Create Account";
+            ViewBag.ClerkPublishableKey = _configuration["Clerk:PublishableKey"] ?? "pk_test_Y2xlcmsuaGVscGRlc2suc2VudGltZW50LmRlbW8k";
             return View(new RegisterViewModel { ReturnUrl = returnUrl, Role = Roles.Agent });
         }
 
@@ -77,6 +82,7 @@ namespace HelpdeskSentiment.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             ViewData["Title"] = "Create Account";
+            ViewBag.ClerkPublishableKey = _configuration["Clerk:PublishableKey"] ?? "pk_test_Y2xlcmsuaGVscGRlc2suc2VudGltZW50LmRlbW8k";
 
             if (!ModelState.IsValid)
             {
@@ -141,6 +147,93 @@ namespace HelpdeskSentiment.Controllers
             }
 
             return RedirectToAction("Index", "Calls");
+        }
+
+        /// <summary>
+        /// Clerk Multi-Platform Authentication Callback (Google, GitHub, Microsoft, Clerk).
+        /// Bridges Clerk SSO authentication into the ASP.NET Core Cookie authentication pipeline.
+        /// </summary>
+        [HttpPost]
+        [Route("Account/ClerkCallback")]
+        public async Task<IActionResult> ClerkCallback([FromBody] ClerkLoginRequest? request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            {
+                return Json(new ClerkAuthResponse
+                {
+                    Success = false,
+                    Message = "Valid email address is required for Clerk authentication."
+                });
+            }
+
+            string email = request.Email.Trim().ToLowerInvariant();
+            string displayName = !string.IsNullOrWhiteSpace(request.FullName)
+                ? request.FullName.Trim()
+                : email.Split('@')[0];
+            string username = email.Split('@')[0];
+
+            // 1. Check if user already exists in UserStore by email/username
+            var existingUser = _users.GetAll().FirstOrDefault(u =>
+                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.DisplayName, displayName, StringComparison.OrdinalIgnoreCase));
+
+            AppUser user;
+            if (existingUser != null)
+            {
+                user = existingUser;
+            }
+            else
+            {
+                // Ensure unique username
+                string candidateUsername = username;
+                int suffix = 1;
+                while (_users.UserExists(candidateUsername))
+                {
+                    candidateUsername = $"{username}{suffix++}";
+                }
+
+                user = _users.CreateUser(
+                    username: candidateUsername,
+                    password: Guid.NewGuid().ToString("N"),
+                    displayName: displayName,
+                    role: Roles.Agent);
+            }
+
+            // 2. Synchronize with database Agents table if not exists
+            if (user.Role == Roles.Agent)
+            {
+                var existingAgent = await _db.Agents.FirstOrDefaultAsync(a => a.Email.ToLower() == email);
+                if (existingAgent == null)
+                {
+                    _db.Agents.Add(new Agent
+                    {
+                        Name = displayName,
+                        Email = email
+                    });
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            // 3. Issue ASP.NET Core cookie session
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                _users.CreatePrincipal(user, CookieAuthenticationDefaults.AuthenticationScheme));
+
+            string provider = string.IsNullOrWhiteSpace(request.Provider) ? "Clerk" : request.Provider;
+            TempData["Message"] = $"Successfully authenticated with {provider} as {user.DisplayName}!";
+            TempData["MessageType"] = "success";
+
+            string redirectUrl = !string.IsNullOrEmpty(request.ReturnUrl) && Url.IsLocalUrl(request.ReturnUrl)
+                ? request.ReturnUrl
+                : Url.Action("Index", "Calls") ?? "/Calls";
+
+            return Json(new ClerkAuthResponse
+            {
+                Success = true,
+                RedirectUrl = redirectUrl,
+                Username = user.Username,
+                Message = "Authentication successful"
+            });
         }
 
         [HttpPost]

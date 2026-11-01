@@ -41,3 +41,4 @@ namespace HelpdeskSentiment.Models
         public string? ReturnUrl { get; set; }
     }
 }
+
