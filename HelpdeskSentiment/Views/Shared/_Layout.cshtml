@@ -13,7 +13,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">📞 Helpdesk Sentiment</a>
+                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">📞 Helpdesk Sentiment</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -54,9 +54,12 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Helpdesk Sentiment - INT402 team project
+    <footer class="border-top footer text-muted bg-white">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2 gap-1">
+            <span class="small">&copy; 2026 <strong>Helpdesk Sentiment Analysis</strong> — INT402 Team Project</span>
+            <span class="small text-secondary">
+                Frontend: <strong>Priyanshu Tanwar</strong> (feature/mvc-ui) &bull; ASP.NET Core MVC &bull; LocalDB
+            </span>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

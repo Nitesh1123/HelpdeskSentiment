@@ -2,97 +2,159 @@
 @{
     var recent = (List<CallRecord>)ViewBag.RecentCalls;
     SentimentLabel? selected = ViewBag.Sentiment;
+    string? search = ViewBag.Search;
+    bool hasFilter = selected != null || !string.IsNullOrWhiteSpace(search);
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Log new call</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">📞 @ViewData["Title"]</h1>
+        <p class="text-muted mb-0 small">Monitor incoming helpdesk calls, real-time sentiment analysis, and escalation flags.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary px-3 shadow-sm">
+        <span class="me-1">➕</span> Log New Call
+    </a>
 </div>
 
-<div class="row">
+<div class="row g-4">
     <div class="col-lg-9">
-        <form method="get" class="row g-2 mb-3">
-            <div class="col-sm-5">
-                <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name, phone or transcript" />
+        <!-- Search and Filter Card -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-center">
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white text-muted">🔍</span>
+                            <input type="text" name="search" value="@search" class="form-control" placeholder="Search caller, phone, or transcript..." />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="sentiment" class="form-select">
+                            <option value="">All Sentiments</option>
+                            @foreach (SentimentLabel s in Enum.GetValues<SentimentLabel>())
+                            {
+                                <option value="@s" selected="@(selected == s)">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">Filter</button>
+                        @if (hasFilter)
+                        {
+                            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                        }
+                    </div>
+                </form>
             </div>
-            <div class="col-sm-4">
-                <select name="sentiment" class="form-select">
-                    <option value="">All sentiments</option>
-                    @foreach (SentimentLabel s in Enum.GetValues<SentimentLabel>())
-                    {
-                        <option value="@s" selected="@(selected == s)">@s</option>
-                    }
-                </select>
-            </div>
-            <div class="col-sm-3 d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary flex-fill">Filter</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
-            </div>
-        </form>
+        </div>
 
         @if (Model.Count == 0)
         {
-            <div class="alert alert-info">No calls found.</div>
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body">
+                    <div class="display-6 text-muted mb-2">📭</div>
+                    <h5 class="text-secondary">No calls match your criteria</h5>
+                    <p class="text-muted small">Try adjusting your search terms or clearing the sentiment filter.</p>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-primary">View All Calls</a>
+                </div>
+            </div>
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Time</th>
-                            <th>Caller</th>
-                            <th>Category</th>
-                            <th>Agent</th>
-                            <th>Sentiment</th>
-                            <th class="text-end">Score</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var call in Model)
-                        {
-                            <tr class="@(call.IsEscalated ? "table-danger" : "")">
-                                <td class="text-nowrap">@call.CallTime.ToString("dd MMM, HH:mm")</td>
-                                <td>
-                                    @call.CallerName
-                                    <div class="small text-muted">@call.PhoneNumber</div>
-                                </td>
-                                <td>@call.Category</td>
-                                <td>@(call.Agent?.Name ?? "—")</td>
-                                <td>
-                                    <partial name="_SentimentBadge" model="call.Sentiment" />
-                                    @if (call.IsEscalated)
-                                    {
-                                        <span class="badge bg-dark">Escalate</span>
-                                    }
-                                </td>
-                                <td class="text-end">@call.SentimentScore.ToString("+0.00;-0.00;0.00")</td>
-                                <td class="text-end text-nowrap">
-                                    <a asp-action="Details" asp-route-id="@call.Id" class="btn btn-sm btn-outline-primary">View</a>
-                                    <a asp-action="Edit" asp-route-id="@call.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                </td>
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Time</th>
+                                <th>Caller</th>
+                                <th>Category</th>
+                                <th>Agent</th>
+                                <th>Sentiment</th>
+                                <th class="text-end">Score</th>
+                                <th class="text-end pe-3">Actions</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var call in Model)
+                            {
+                                <tr class="@(call.IsEscalated ? "table-danger bg-opacity-25" : "")">
+                                    <td class="text-nowrap ps-3">
+                                        <div class="fw-semibold">@call.CallTime.ToString("dd MMM")</div>
+                                        <div class="small text-muted">@call.CallTime.ToString("HH:mm")</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@call.CallerName</div>
+                                        <div class="small text-muted font-monospace">@call.PhoneNumber</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@call.Category</span>
+                                    </td>
+                                    <td>
+                                        <span class="small">@(call.Agent?.Name ?? "—")</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <partial name="_SentimentBadge" model="call.Sentiment" />
+                                            @if (call.IsEscalated)
+                                            {
+                                                <span class="badge bg-danger shadow-xs" title="Flagged for supervisor attention">⚠️ Escalated</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="text-end font-monospace fw-semibold @(call.SentimentScore < -0.1 ? "text-danger" : (call.SentimentScore > 0.1 ? "text-success" : "text-muted"))">
+                                        @call.SentimentScore.ToString("+0.00;-0.00;0.00")
+                                    </td>
+                                    <td class="text-end pe-3 text-nowrap">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Details" asp-route-id="@call.Id" class="btn btn-outline-primary" title="View details">View</a>
+                                            <a asp-action="Edit" asp-route-id="@call.Id" class="btn btn-outline-secondary" title="Edit call">Edit</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-2 px-3">
+                    <span class="text-muted small">Showing <strong>@Model.Count</strong> call(s)</span>
+                    @if (hasFilter)
+                    {
+                        <span class="badge bg-info-subtle text-info border border-info-subtle small">Filtered view</span>
+                    }
+                </div>
             </div>
-            <p class="text-muted small">@Model.Count call(s)</p>
         }
     </div>
 
+    <!-- Recently Viewed Sidebar -->
     <div class="col-lg-3">
-        <div class="card">
-            <div class="card-header">Recently viewed</div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <span class="fw-bold">🕒 Recently Viewed</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill">@recent.Count</span>
+            </div>
             <ul class="list-group list-group-flush">
                 @if (recent.Count == 0)
                 {
-                    <li class="list-group-item text-muted small">Calls you open are remembered here for this session.</li>
+                    <li class="list-group-item text-muted small py-4 text-center">
+                        <div>💬</div>
+                        Calls you inspect will appear here during your session.
+                    </li>
                 }
                 @foreach (var call in recent)
                 {
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a asp-action="Details" asp-route-id="@call.Id">@call.CallerName</a>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                        <div>
+                            <a asp-action="Details" asp-route-id="@call.Id" class="text-decoration-none fw-semibold d-block">
+                                @call.CallerName
+                            </a>
+                            <span class="text-muted small font-monospace">@call.PhoneNumber</span>
+                        </div>
                         <partial name="_SentimentBadge" model="call.Sentiment" />
                     </li>
                 }
