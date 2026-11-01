@@ -41,13 +41,13 @@ Syllabus: Unit II (C# fundamentals, OOP, strings, arrays, exceptions), Unit IV (
 
 Syllabus: Unit III (MVC, Razor, layout, sections, ViewStart, ViewBag/ViewData, TempData, Session, QueryString, forms, model binding, validation).
 
-- [ ] `CallsController`: Index (list with **QueryString** filter `?sentiment=Negative&search=`), Details, Create, Edit, Delete
-- [ ] Create form with **model binding** + **server‑side** (`ModelState`) and **client‑side** (jQuery validation) validation
-- [ ] After saving, show the detected sentiment with **TempData** flash message
-- [ ] `DashboardController`: counts per sentiment / category using **ViewBag** and **ViewData**, Chart.js chart
-- [ ] “Recently viewed calls” stored in **Session**
-- [ ] `_Layout.cshtml` with navbar, `@RenderSection("Scripts")`, `_ViewStart`, `_ViewImports`, partial view for the sentiment badge
-- [ ] “Analyse text” playground page (paste text → see score and matched words)
+- [x] `CallsController`: Index (list with **QueryString** filter `?sentiment=Negative&search=`), Details, Create, Edit, Delete
+- [x] Create form with **model binding** + **server‑side** (`ModelState`) and **client‑side** (jQuery validation) validation
+- [x] After saving, show the detected sentiment with **TempData** flash message
+- [x] `DashboardController`: counts per sentiment / category using **ViewBag** and **ViewData**, Chart.js chart
+- [x] “Recently viewed calls” stored in **Session**
+- [x] `_Layout.cshtml` with navbar, `@RenderSection("Scripts")`, `_ViewStart`, `_ViewImports`, partial view for the sentiment badge
+- [x] “Analyse text” playground page (paste text → see score and matched words)
 
 ## Member 3 — Security, Middleware & Web API (`feature/api-auth`)
 
