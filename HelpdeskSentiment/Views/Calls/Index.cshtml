@@ -9,15 +9,15 @@
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
         <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
-            <span>Incoming Calls</span>
+            <span>Helpdesk Call Records</span>
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 rounded-pill">@Model.Count total</span>
         </h1>
-        <p class="text-muted mb-0 small">Real-time caller sentiment analysis, transcript review, and supervisor escalation flags.</p>
+        <p class="text-muted mb-0 small">Real-time caller sentiment telemetry, conversational transcript archives, and supervisor escalation queues.</p>
     </div>
     <div class="d-flex gap-2">
         <a asp-action="Create" class="btn btn-primary px-3 shadow-sm d-flex align-items-center gap-1">
             <i class="bi bi-plus-lg"></i>
-            <span>Log New Call</span>
+            <span>Log Call</span>
         </a>
     </div>
 </div>
@@ -34,15 +34,15 @@
                             <span class="input-group-text bg-white text-muted border-end-0">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input type="text" id="liveSearchInput" name="search" value="@search" class="form-control border-start-0" placeholder="Filter by name, phone, or transcript..." />
+                            <input type="text" id="liveSearchInput" name="search" value="@search" class="form-control border-start-0" placeholder="Filter by caller, phone, or transcript..." />
                         </div>
                     </div>
                     <div class="col-md-4">
                         <select name="sentiment" class="form-select" onchange="this.form.submit()">
-                            <option value="">All Sentiments</option>
+                            <option value="">All Sentiment Tiers</option>
                             @foreach (SentimentLabel s in Enum.GetValues<SentimentLabel>())
                             {
-                                <option value="@s" selected="@(selected == s)">@s</option>
+                                <option value="@s" selected="@(selected == s)">@s Sentiment</option>
                             }
                         </select>
                     </div>
@@ -61,8 +61,8 @@
 
                 <!-- Quick Filter Pills -->
                 <div class="d-flex flex-wrap align-items-center gap-2 mt-3 pt-2 border-top">
-                    <span class="small text-muted fw-semibold me-1"><i class="bi bi-sliders me-1"></i> Quick View:</span>
-                    <a asp-action="Index" class="badge text-decoration-none @(selected == null ? "bg-dark text-white" : "bg-light text-dark border")">All</a>
+                    <span class="small text-muted fw-semibold me-1"><i class="bi bi-sliders me-1"></i> Quick Filters:</span>
+                    <a asp-action="Index" class="badge text-decoration-none @(selected == null ? "bg-dark text-white" : "bg-light text-dark border")">All Records</a>
                     <a asp-action="Index" asp-route-sentiment="Positive" class="badge text-decoration-none @(selected == SentimentLabel.Positive ? "bg-success text-white" : "bg-success-subtle text-success border border-success-subtle")">🙂 Positive</a>
                     <a asp-action="Index" asp-route-sentiment="Neutral" class="badge text-decoration-none @(selected == SentimentLabel.Neutral ? "bg-secondary text-white" : "bg-secondary-subtle text-secondary border border-secondary-subtle")">😐 Neutral</a>
                     <a asp-action="Index" asp-route-sentiment="Negative" class="badge text-decoration-none @(selected == SentimentLabel.Negative ? "bg-danger text-white" : "bg-danger-subtle text-danger border border-danger-subtle")">😠 Negative</a>
@@ -76,8 +76,8 @@
                 <div class="card-body">
                     <div class="display-6 text-muted mb-2">📭</div>
                     <h5 class="text-secondary fw-semibold">No calls match your criteria</h5>
-                    <p class="text-muted small">Try adjusting your search terms or clearing the sentiment filter.</p>
-                    <a asp-action="Index" class="btn btn-sm btn-outline-primary">View All Calls</a>
+                    <p class="text-muted small">Try adjusting your search criteria or resetting filters.</p>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-primary">View All Records</a>
                 </div>
             </div>
         }
@@ -90,9 +90,9 @@
                             <tr>
                                 <th class="ps-3">Timestamp</th>
                                 <th>Caller</th>
-                                <th>Category</th>
-                                <th>Agent</th>
-                                <th>Sentiment</th>
+                                <th>Department</th>
+                                <th>Assigned Agent</th>
+                                <th>Sentiment Tier</th>
                                 <th class="text-end">Score</th>
                                 <th class="text-end pe-3">Actions</th>
                             </tr>
@@ -122,7 +122,7 @@
                                             <partial name="_SentimentBadge" model="call.Sentiment" />
                                             @if (call.IsEscalated)
                                             {
-                                                <span class="badge bg-danger shadow-xs" title="Escalation required">
+                                                <span class="badge bg-danger shadow-xs" title="Escalation priority">
                                                     <i class="bi bi-exclamation-triangle-fill"></i> Escalated
                                                 </span>
                                             }
@@ -133,10 +133,10 @@
                                     </td>
                                     <td class="text-end pe-3 text-nowrap">
                                         <div class="btn-group btn-group-sm">
-                                            <a asp-action="Details" asp-route-id="@call.Id" class="btn btn-outline-primary" title="View call details">
+                                            <a asp-action="Details" asp-route-id="@call.Id" class="btn btn-outline-primary" title="View call record">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
-                                            <a asp-action="Edit" asp-route-id="@call.Id" class="btn btn-outline-secondary" title="Edit call">
+                                            <a asp-action="Edit" asp-route-id="@call.Id" class="btn btn-outline-secondary" title="Edit call record">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                         </div>
@@ -162,7 +162,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                 <span class="fw-bold d-flex align-items-center gap-1">
-                    <i class="bi bi-clock-history text-primary"></i> Recently Viewed
+                    <i class="bi bi-clock-history text-primary"></i> Recent History
                 </span>
                 <span class="badge bg-secondary-subtle text-secondary rounded-pill">@recent.Count / 5</span>
             </div>
@@ -171,7 +171,7 @@
                 {
                     <li class="list-group-item text-muted small py-4 text-center">
                         <i class="bi bi-info-circle fs-4 d-block mb-1 text-secondary"></i>
-                        Calls you inspect in this session will appear here for fast access.
+                        Inspected call records will appear here during this session.
                     </li>
                 }
                 @foreach (var call in recent)

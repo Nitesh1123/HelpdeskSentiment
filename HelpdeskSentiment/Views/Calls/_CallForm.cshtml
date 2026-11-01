@@ -15,7 +15,7 @@
         <label asp-for="PhoneNumber" class="form-label">
             <i class="bi bi-phone me-1 text-primary"></i> @Html.DisplayNameFor(m => m.PhoneNumber)
         </label>
-        <input asp-for="PhoneNumber" class="form-control" maxlength="10" placeholder="10-digit mobile, e.g. 9876543210" />
+        <input asp-for="PhoneNumber" class="form-control" maxlength="10" placeholder="10-digit mobile number, e.g. 9876543210" />
         <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
     </div>
 
@@ -31,7 +31,7 @@
             <i class="bi bi-headset me-1 text-primary"></i> @Html.DisplayNameFor(m => m.AgentId)
         </label>
         <select asp-for="AgentId" asp-items="ViewBag.Agents" class="form-select">
-            <option value="">-- Select Helpdesk Agent --</option>
+            <option value="">-- Select Representative --</option>
         </select>
         <span asp-validation-for="AgentId" class="text-danger small"></span>
     </div>
@@ -47,26 +47,26 @@
         <label asp-for="DurationSeconds" class="form-label">
             <i class="bi bi-stopwatch me-1 text-primary"></i> @Html.DisplayNameFor(m => m.DurationSeconds)
         </label>
-        <input asp-for="DurationSeconds" class="form-control" placeholder="Sec (e.g. 120)" />
+        <input asp-for="DurationSeconds" class="form-control" placeholder="Duration (seconds)" />
         <span asp-validation-for="DurationSeconds" class="text-danger small"></span>
     </div>
 
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-1">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1">
             <label asp-for="Transcript" class="form-label mb-0">
                 <i class="bi bi-chat-left-quote me-1 text-primary"></i> @Html.DisplayNameFor(m => m.Transcript)
             </label>
-            <div class="d-flex align-items-center gap-1">
-                <span class="text-muted small me-1">Quick Sample:</span>
-                <span class="quick-chip" onclick="applySample('angry')">😡 Angry Bill</span>
-                <span class="quick-chip" onclick="applySample('happy')">😊 Happy Praise</span>
-                <span class="quick-chip" onclick="applySample('escalate')">⚠️ Escalation</span>
-                <span class="quick-chip" onclick="applySample('neutral')">📋 Inquiry</span>
+            <div class="d-flex flex-wrap align-items-center gap-1">
+                <span class="text-muted small me-1">Call Templates:</span>
+                <span class="quick-chip" onclick="applySample('billing')"><i class="bi bi-file-earmark-text me-1"></i> Billing Dispute</span>
+                <span class="quick-chip" onclick="applySample('commendation')"><i class="bi bi-hand-thumbs-up me-1"></i> Commendation</span>
+                <span class="quick-chip" onclick="applySample('escalation')"><i class="bi bi-exclamation-triangle me-1"></i> Urgent SLA Escalation</span>
+                <span class="quick-chip" onclick="applySample('inquiry')"><i class="bi bi-question-circle me-1"></i> General Inquiry</span>
             </div>
         </div>
 
         <textarea asp-for="Transcript" id="callTranscript" class="form-control" rows="5"
-                  placeholder="Write or paste what the caller said during the call..."></textarea>
+                  placeholder="Record customer statements, caller concerns, or call notes here..."></textarea>
         <span asp-validation-for="Transcript" class="text-danger small"></span>
 
         <!-- Live interactive estimator preview -->
@@ -86,17 +86,17 @@
             </div>
         </div>
         <div class="form-text small text-muted">
-            <i class="bi bi-info-circle me-1"></i> Exact sentiment score and database records are generated on the server when you save.
+            <i class="bi bi-shield-check me-1 text-primary"></i> Transcript is processed through natural language lexicon models upon saving.
         </div>
     </div>
 </div>
 
 <script>
     const sampleTranscripts = {
-        angry: "My billing invoice is completely wrong again! This is the third time I am calling and nobody is solving it. I am very angry and frustrated with your terrible service!",
-        happy: "I called to thank the support team. Amit was very helpful, polite, and resolved my connection issue within minutes. Great experience, thank you!",
-        escalate: "I have waited two weeks for this refund and received nothing. I want to speak to your manager right now, or I will file a consumer court complaint and take legal action!",
-        neutral: "Hello, I am calling to check the working hours of your technical branch and verify if my KYC document was submitted yesterday."
+        billing: "My billing invoice is completely wrong again. This is the third time I am reaching out and the discrepancy remains unresolved. I am extremely dissatisfied with this repeated error.",
+        commendation: "I am calling to formally commend the customer service team. Amit provided exceptional assistance, diagnosed the network issue promptly, and resolved it with professionalism.",
+        escalation: "I have waited fourteen days for the promised account credit. Please transfer this call directly to a senior supervisor immediately, or I will file a formal consumer grievance.",
+        inquiry: "Good morning, I am calling to inquire about our scheduled maintenance window and verify whether our account verification documents were received."
     };
 
     function applySample(type) {
@@ -117,9 +117,9 @@
         const keywordBox = document.getElementById('detectedKeywords');
         const keywordPills = document.getElementById('keywordPills');
 
-        const posWords = ['good', 'great', 'happy', 'thank', 'thanks', 'excellent', 'helpful', 'polite', 'best', 'resolved', 'awesome', 'love'];
-        const negWords = ['bad', 'worst', 'angry', 'terrible', 'upset', 'unhappy', 'frustrated', 'horrible', 'poor', 'rude', 'fail', 'failed', 'wrong', 'fraud'];
-        const escWords = ['manager', 'supervisor', 'legal', 'court', 'lawyer', 'complaint', 'police', 'sue', 'consumer'];
+        const posWords = ['good', 'great', 'happy', 'thank', 'thanks', 'exceptional', 'helpful', 'polite', 'best', 'resolved', 'professional', 'love', 'assistance'];
+        const negWords = ['bad', 'worst', 'angry', 'terrible', 'upset', 'unhappy', 'frustrated', 'horrible', 'poor', 'rude', 'fail', 'failed', 'wrong', 'fraud', 'dissatisfied', 'error', 'discrepancy'];
+        const escWords = ['manager', 'supervisor', 'legal', 'court', 'lawyer', 'complaint', 'police', 'sue', 'consumer', 'grievance', 'breach'];
 
         function updateLiveStats() {
             if (!ta) return;
