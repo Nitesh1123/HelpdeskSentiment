@@ -1,0 +1,230 @@
+@{
+    string databaseFile = ViewBag.DatabaseFile;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-database text-primary"></i> Live Database
+            <span id="db-status" class="badge rounded-pill text-bg-secondary fw-normal fs-6">Connecting…</span>
+        </h1>
+        <p class="text-muted mb-0 small">
+            SQL Server LocalDB · <code>@databaseFile</code>
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">Updated <span id="db-updated">—</span></span>
+        <select id="db-interval" class="form-select form-select-sm" style="width:auto" aria-label="Refresh interval">
+            <option value="1000">every 1 s</option>
+            <option value="2000" selected>every 2 s</option>
+            <option value="5000">every 5 s</option>
+        </select>
+        <button id="db-toggle" type="button" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pause-fill"></i> Pause
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-9">
+        <ul id="db-tabs" class="nav nav-pills gap-2 mb-3" role="tablist"></ul>
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><span id="db-object-name">—</span> <span id="db-object-kind" class="badge text-bg-light border ms-1"></span></span>
+                <span class="text-muted small" id="db-object-count"></span>
+            </div>
+            <div class="table-responsive db-live-table">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light"><tr id="db-head"></tr></thead>
+                    <tbody id="db-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+            Read-only. Log, edit or delete a call in another tab (or through the API) and watch it appear here:
+            <span class="db-legend db-row-new">new row</span> <span class="db-legend db-row-changed">changed row</span>
+        </p>
+    </div>
+    <div class="col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-activity me-1"></i> Activity</div>
+            <ul id="db-log" class="list-group list-group-flush small">
+                <li class="list-group-item text-muted">Changes since you opened this page appear here.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const snapshotUrl = '@Url.Action("Snapshot", "Database")';
+            const status = document.getElementById('db-status');
+            const updated = document.getElementById('db-updated');
+            const intervalSelect = document.getElementById('db-interval');
+            const toggle = document.getElementById('db-toggle');
+            const tabs = document.getElementById('db-tabs');
+            const head = document.getElementById('db-head');
+            const body = document.getElementById('db-body');
+            const log = document.getElementById('db-log');
+
+            let selected = 'CallRecords';
+            let paused = false;
+            let timer = null;
+            let latest = null;
+            const previous = {};   // object name -> Map(key -> row signature)
+            const highlight = {};  // object name -> Map(key -> { type: 'new' | 'changed', until: time })
+            const highlightMs = 6000;
+
+            const format = value => {
+                if (value === null || value === undefined) return 'NULL';
+                if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                    return new Date(value).toLocaleString();
+                }
+                return String(value);
+            };
+
+            function setStatus(text, css) {
+                status.textContent = text;
+                status.className = 'badge rounded-pill fw-normal fs-6 ' + css;
+            }
+
+            function addLog(text) {
+                if (log.dataset.started !== '1') { log.textContent = ''; log.dataset.started = '1'; }
+                const item = document.createElement('li');
+                item.className = 'list-group-item';
+                const time = document.createElement('div');
+                time.className = 'text-muted';
+                time.textContent = new Date().toLocaleTimeString();
+                const message = document.createElement('div');
+                message.textContent = text;
+                item.append(time, message);
+                log.prepend(item);
+                while (log.children.length > 30) log.lastChild.remove();
+            }
+
+            // Compare with the last snapshot: first column is the row key.
+            function diff(obj) {
+                const now = new Map(obj.rows.map(r => [String(r[0]), JSON.stringify(r)]));
+                const before = previous[obj.name];
+                const marks = highlight[obj.name] || (highlight[obj.name] = new Map());
+                if (before) {
+                    const until = Date.now() + highlightMs;
+                    let added = 0, changed = 0, removed = 0;
+                    now.forEach((sig, key) => {
+                        if (!before.has(key)) { marks.set(key, { type: 'new', until }); added++; }
+                        else if (before.get(key) !== sig) { marks.set(key, { type: 'changed', until }); changed++; }
+                    });
+                    before.forEach((_, key) => { if (!now.has(key)) removed++; });
+                    if (added) addLog(`${obj.name}: ${added} row(s) added`);
+                    if (changed) addLog(`${obj.name}: ${changed} row(s) changed`);
+                    if (removed) addLog(`${obj.name}: ${removed} row(s) deleted`);
+                }
+                previous[obj.name] = now;
+            }
+
+            function renderTabs() {
+                tabs.textContent = '';
+                latest.objects.forEach(obj => {
+                    const li = document.createElement('li');
+                    li.className = 'nav-item';
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-sm d-flex align-items-center gap-2 ' +
+                        (obj.name === selected ? 'btn-primary' : 'btn-outline-secondary bg-white text-dark');
+                    const icon = document.createElement('i');
+                    icon.className = 'bi ' + (obj.kind === 'View' ? 'bi-eye' : 'bi-table');
+                    const label = document.createElement('span');
+                    label.textContent = obj.name;
+                    const count = document.createElement('span');
+                    count.className = 'badge ' + (obj.name === selected ? 'text-bg-light' : 'text-bg-secondary');
+                    count.textContent = obj.total;
+                    button.append(icon, label, count);
+                    button.addEventListener('click', () => { selected = obj.name; render(); });
+                    li.append(button);
+                    tabs.append(li);
+                });
+            }
+
+            function renderTable() {
+                const obj = latest.objects.find(o => o.name === selected) || latest.objects[0];
+                document.getElementById('db-object-name').textContent = obj.name;
+                document.getElementById('db-object-kind').textContent = obj.kind;
+                document.getElementById('db-object-count').textContent =
+                    obj.total > obj.rows.length ? `showing ${obj.rows.length} of ${obj.total} rows` : `${obj.total} row(s)`;
+
+                head.textContent = '';
+                obj.columns.forEach(c => {
+                    const th = document.createElement('th');
+                    th.className = 'text-nowrap';
+                    th.textContent = c;
+                    head.append(th);
+                });
+
+                body.textContent = '';
+                if (obj.rows.length === 0) {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = obj.columns.length;
+                    td.className = 'text-muted text-center py-4';
+                    td.textContent = 'No rows';
+                    tr.append(td);
+                    body.append(tr);
+                }
+                const marks = highlight[obj.name] || new Map();
+                const nowMs = Date.now();
+                marks.forEach((m, key) => { if (m.until < nowMs) marks.delete(key); });
+                obj.rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const mark = marks.get(String(row[0]));
+                    if (mark) tr.className = mark.type === 'new' ? 'db-row-new' : 'db-row-changed';
+                    row.forEach(value => {
+                        const td = document.createElement('td');
+                        const text = format(value);
+                        td.textContent = text.length > 80 ? text.slice(0, 80) + '…' : text;
+                        if (text.length > 80) td.title = text;
+                        if (value === null) td.className = 'text-muted fst-italic';
+                        tr.append(td);
+                    });
+                    body.append(tr);
+                });
+            }
+
+            function render() {
+                if (!latest) return;
+                renderTabs();
+                renderTable();
+            }
+
+            async function refresh() {
+                try {
+                    const response = await fetch(snapshotUrl, { cache: 'no-store', credentials: 'same-origin' });
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    latest = await response.json();
+                    latest.objects.forEach(diff);
+                    render();
+                    updated.textContent = new Date().toLocaleTimeString();
+                    setStatus('● Live', 'text-bg-success');
+                } catch (e) {
+                    setStatus('Disconnected', 'text-bg-danger');
+                }
+            }
+
+            function schedule() {
+                clearInterval(timer);
+                if (!paused) timer = setInterval(refresh, Number(intervalSelect.value));
+            }
+
+            toggle.addEventListener('click', () => {
+                paused = !paused;
+                toggle.innerHTML = paused ? '<i class="bi bi-play-fill"></i> Resume' : '<i class="bi bi-pause-fill"></i> Pause';
+                if (paused) setStatus('Paused', 'text-bg-secondary'); else refresh();
+                schedule();
+            });
+            intervalSelect.addEventListener('change', schedule);
+
+            refresh();
+            schedule();
+        })();
+    </script>
+}

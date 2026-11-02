@@ -10,6 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The database files live in the project's App_Data folder; |DataDirectory| in the connection string points here.
+string dataDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(dataDirectory);
+AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
 // Add services to the container.
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
