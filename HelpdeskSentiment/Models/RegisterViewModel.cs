@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using HelpdeskSentiment.Authentication;
 
 namespace HelpdeskSentiment.Models
 {
@@ -22,10 +21,6 @@ namespace HelpdeskSentiment.Models
         [Display(Name = "Email Address")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Account role is required.")]
-        [Display(Name = "Account Role")]
-        public string Role { get; set; } = Roles.Agent;
-
         [Required(ErrorMessage = "Password is required.")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long.")]
         [DataType(DataType.Password)]
@@ -41,4 +36,3 @@ namespace HelpdeskSentiment.Models
         public string? ReturnUrl { get; set; }
     }
 }
-
