@@ -1,35 +1,109 @@
-﻿@{
-    ViewData["Title"] = "Home";
+@{
+    ViewData["Title"] = "Customer Sentiment & Escalation Intelligence";
 }
 
-<div class="py-4">
-    <h1 class="display-6">Helpdesk call sentiment analysis</h1>
-    <p class="lead">Log incoming helpdesk calls, detect how the caller felt, and spot angry customers before they leave.</p>
-    <div class="d-flex flex-wrap gap-2">
-        <a asp-controller="Calls" asp-action="Create" class="btn btn-primary">Log a call</a>
-        <a asp-controller="Calls" asp-action="Index" class="btn btn-outline-primary">View calls</a>
-        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">Dashboard</a>
-        <a asp-controller="Analyze" asp-action="Index" class="btn btn-outline-secondary">Try the analyser</a>
+<!-- Hero Section -->
+<div class="card border-0 shadow-sm mb-4 text-white overflow-hidden" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f172a 100%); border-radius: 1rem;">
+    <div class="card-body p-4 p-md-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-white bg-opacity-25 text-white mb-3 px-3 py-2 text-uppercase" style="letter-spacing: 0.05em; font-size: 0.75rem;">
+                    <i class="bi bi-shield-check me-1"></i> Enterprise Customer Intelligence Platform
+                </span>
+                <h1 class="display-6 fw-bold mb-2">Real-Time Helpdesk Call Sentiment & Automated Escalation</h1>
+                <p class="lead text-white-50 mb-4" style="max-width: 650px;">
+                    Capture call transcripts, automatically evaluate customer sentiment on a normalized spectrum from -1.0 to +1.0, and proactively identify distressed callers for immediate supervisor intervention.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-controller="Calls" asp-action="Create" class="btn btn-light text-primary fw-semibold px-4 py-2 shadow-sm">
+                        <i class="bi bi-telephone-plus me-1"></i> Log Call
+                    </a>
+                    <a asp-controller="Calls" asp-action="Index" class="btn btn-outline-light px-4 py-2">
+                        <i class="bi bi-list-task me-1"></i> Call Records
+                    </a>
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-light px-4 py-2">
+                        <i class="bi bi-speedometer2 me-1"></i> Supervisor Dashboard
+                    </a>
+                    <a asp-controller="Analyze" asp-action="Index" class="btn btn-outline-light px-4 py-2">
+                        <i class="bi bi-cpu me-1"></i> Sentiment Studio
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0 d-none d-lg-block">
+                <div class="bg-white bg-opacity-10 rounded-4 p-4 border border-white border-opacity-15 backdrop-blur">
+                    <div class="fs-1 mb-2">⚡</div>
+                    <div class="h5 fw-bold text-white mb-1">Active Sentiment Engine</div>
+                    <div class="small text-white-50">Natural language lexicon evaluation, multi-word negation processing, and automated priority flagging.</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="row g-3">
+<!-- Architecture & Features Row -->
+<div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="card h-100"><div class="card-body">
-            <h2 class="h6">1. Log the call</h2>
-            <p class="small mb-0">The agent enters the caller details and a transcript or notes of what was said.</p>
-        </div></div>
+        <div class="card h-100 border-0 shadow-sm p-3">
+            <div class="card-body">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-3 p-3 mb-3 fs-4">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">1. Call Logging & Verification</h3>
+                <p class="text-muted small mb-3">
+                    Support agents log caller information, department category, duration, and transcripts. Dual-layer validation guarantees complete telemetry without missing attributes.
+                </p>
+                <a asp-controller="Calls" asp-action="Create" class="btn btn-sm btn-outline-primary">
+                    Open Call Logger &rarr;
+                </a>
+            </div>
+        </div>
     </div>
+
     <div class="col-md-4">
-        <div class="card h-100"><div class="card-body">
-            <h2 class="h6">2. Sentiment is scored</h2>
-            <p class="small mb-0">A rule based analyser reads the words, handles “not good” and “very angry”, and gives a score from -1 to +1.</p>
-        </div></div>
+        <div class="card h-100 border-0 shadow-sm p-3">
+            <div class="card-body">
+                <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-3 p-3 mb-3 fs-4">
+                    <i class="bi bi-shield-exclamation"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">2. Sentiment Scoring & Alerting</h3>
+                <p class="text-muted small mb-3">
+                    Every interaction is assigned an emotional score. Calls containing acute distress indicators or escalation requests trigger automated priority tags for prompt resolution.
+                </p>
+                <a asp-controller="Analyze" asp-action="Index" class="btn btn-sm btn-outline-danger">
+                    Launch Sentiment Studio &rarr;
+                </a>
+            </div>
+        </div>
     </div>
+
     <div class="col-md-4">
-        <div class="card h-100"><div class="card-body">
-            <h2 class="h6">3. Supervisors act</h2>
-            <p class="small mb-0">Very negative calls, or calls mentioning a manager or legal action, are flagged for a call back.</p>
-        </div></div>
+        <div class="card h-100 border-0 shadow-sm p-3">
+            <div class="card-body">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-3 p-3 mb-3 fs-4">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">3. Operations Analytics</h3>
+                <p class="text-muted small mb-3">
+                    Supervisors monitor operational KPIs, department volume distributions, agent satisfaction ratings, and active callback queues.
+                </p>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn btn-sm btn-outline-success">
+                    Access Dashboard &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Infrastructure Ribbon -->
+<div class="card border-0 shadow-sm bg-white p-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span class="small fw-bold text-muted text-uppercase">Platform Infrastructure:</span>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-light text-dark border"><i class="bi bi-cpu text-primary me-1"></i> .NET 10 High-Performance Runtime</span>
+            <span class="badge bg-light text-dark border"><i class="bi bi-database text-warning me-1"></i> Microsoft SQL Server Enterprise</span>
+            <span class="badge bg-light text-dark border"><i class="bi bi-shield-lock text-success me-1"></i> Encrypted Cookie & Token Auth</span>
+            <span class="badge bg-light text-dark border"><i class="bi bi-graph-up text-info me-1"></i> Real-Time Vector Data Visualization</span>
+            <span class="badge bg-light text-dark border"><i class="bi bi-hdd-network text-secondary me-1"></i> RESTful OpenAPI Endpoints</span>
+        </div>
     </div>
 </div>

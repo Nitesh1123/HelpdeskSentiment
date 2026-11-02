@@ -1,40 +1,173 @@
 @model AnalyzeViewModel
 @{
-    ViewData["Title"] = "Analyse text";
+    ViewData["Title"] = "Sentiment Evaluation Studio";
 }
 
-<h1 class="h3 mb-1">@ViewData["Title"]</h1>
-<p class="text-muted">Try the sentiment engine on any sentence. Nothing is saved.</p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
+            <span>Natural Language Sentiment Studio</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 rounded-pill">
+                <i class="bi bi-cpu me-1"></i> Lexicon Engine
+            </span>
+        </h1>
+        <p class="text-muted mb-0 small">Evaluate conversational text, inspect token weights, and test automated escalation signals in real time.</p>
+    </div>
+</div>
 
-<form asp-action="Index" method="post">
-    <textarea asp-for="Text" class="form-control mb-2" rows="5"
-              placeholder="e.g. I am not happy, this is the third time my payment failed!"></textarea>
-    <span asp-validation-for="Text" class="text-danger small d-block mb-2"></span>
-    <button type="submit" class="btn btn-primary">Analyse</button>
-</form>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label asp-for="Text" class="form-label mb-0 fw-semibold">
+                    <i class="bi bi-pencil-square text-primary me-1"></i> Input Call Transcript / Statement
+                </label>
+            </div>
 
-@if (Model.Result != null)
-{
-    var r = Model.Result;
-    <div class="card mt-4">
-        <div class="card-body">
-            <h2 class="h5">
-                <partial name="_SentimentBadge" model="r.Label" />
-                <span class="ms-2">score @r.Score.ToString("+0.000;-0.000;0")</span>
-                @if (r.ShouldEscalate)
-                {
-                    <span class="badge bg-dark ms-2">Escalate</span>
-                }
-            </h2>
-            <p class="mb-1"><strong>Positive words:</strong>
-                @(r.PositiveWords.Count == 0 ? "none" : string.Join(", ", r.PositiveWords))</p>
-            <p class="mb-1"><strong>Negative words:</strong>
-                @(r.NegativeWords.Count == 0 ? "none" : string.Join(", ", r.NegativeWords))</p>
-            <p class="text-muted small mb-0">@r.TokenCount words read by the @ViewBag.AnalyzerName analyser.</p>
+            <!-- Quick corporate sample buttons -->
+            <div class="d-flex flex-wrap align-items-center gap-1 mb-3">
+                <span class="small text-muted me-1">Sample Scenarios:</span>
+                <button type="button" class="quick-chip" onclick="setPreset('billing')"><i class="bi bi-file-earmark-text me-1"></i> Billing Dispute</button>
+                <button type="button" class="quick-chip" onclick="setPreset('support')"><i class="bi bi-hand-thumbs-up me-1"></i> Support Commendation</button>
+                <button type="button" class="quick-chip" onclick="setPreset('negation')"><i class="bi bi-arrow-left-right me-1"></i> Negation Pattern ("not happy")</button>
+                <button type="button" class="quick-chip" onclick="setPreset('escalate')"><i class="bi bi-exclamation-triangle me-1"></i> Urgent SLA Escalation</button>
+            </div>
+
+            <form asp-action="Index" method="post">
+                <textarea asp-for="Text" id="analyzerText" class="form-control mb-2 font-monospace" rows="6"
+                          placeholder="Type or paste customer statements, reviews, or transcripts here..."></textarea>
+                <span asp-validation-for="Text" class="text-danger small d-block mb-3"></span>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-play-circle me-1"></i> Analyze Text
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('analyzerText').value='';">
+                        Clear
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-}
+
+    <div class="col-lg-5">
+        @if (Model.Result != null)
+        {
+            var r = Model.Result;
+            int percent = (int)Math.Round((r.Score + 1) * 50);
+            string barCss = r.Label switch
+            {
+                SentimentLabel.Positive => "bg-success",
+                SentimentLabel.Negative => "bg-danger",
+                _ => "bg-secondary"
+            };
+
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-speedometer2 text-primary me-1"></i> Telemetry Breakdown</span>
+                    <span class="badge bg-light text-muted border">@r.TokenCount tokens evaluated</span>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-2 mb-3">
+                        <div class="fs-4 mb-1">
+                            <partial name="_SentimentBadge" model="r.Label" />
+                            @if (r.ShouldEscalate)
+                            {
+                                <span class="badge bg-danger ms-1">⚠️ Escalation Priority</span>
+                            }
+                        </div>
+                        <div class="display-6 fw-bold @(r.Score < 0 ? "text-danger" : (r.Score > 0 ? "text-success" : "text-muted"))">
+                            @r.Score.ToString("+0.000;-0.000;0.000")
+                        </div>
+                        <div class="small text-muted">Evaluated Sentiment Metric</div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between small text-muted font-monospace mb-1">
+                            <span>-1.0 (Critical)</span>
+                            <span>0.0 (Neutral)</span>
+                            <span>+1.0 (Satisfied)</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar @barCss progress-bar-striped progress-bar-animated" style="width: @percent%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Word Detections -->
+                    <div class="mb-3">
+                        <div class="small fw-semibold text-success mb-1">
+                            <i class="bi bi-plus-circle me-1"></i> Positive Keywords Detected:
+                        </div>
+                        <div>
+                            @if (r.PositiveWords.Count == 0)
+                            {
+                                <span class="text-muted small">None</span>
+                            }
+                            else
+                            {
+                                @foreach (var w in r.PositiveWords)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle me-1 mb-1">@w</span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="small fw-semibold text-danger mb-1">
+                            <i class="bi bi-dash-circle me-1"></i> Negative Keywords Detected:
+                        </div>
+                        <div>
+                            @if (r.NegativeWords.Count == 0)
+                            {
+                                <span class="text-muted small">None</span>
+                            }
+                            else
+                            {
+                                @foreach (var w in r.NegativeWords)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle me-1 mb-1">@w</span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Processed by <strong>@ViewBag.AnalyzerName</strong>. Lexicon tokenization, negation modifiers, and intensity weights applied.
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm h-100 text-center py-5 d-flex align-items-center justify-content-center">
+                <div class="card-body">
+                    <div class="display-6 text-muted mb-3"><i class="bi bi-file-earmark-bar-graph"></i></div>
+                    <h5 class="text-secondary fw-semibold">No Statement Evaluated Yet</h5>
+                    <p class="text-muted small" style="max-width: 320px; margin: 0 auto;">
+                        Select a sample scenario or enter customer dialogue on the left, then click <strong>Analyze Text</strong>.
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        const presets = {
+            billing: "My billing invoice is completely incorrect again, and customer support has not rectified it. I am extremely dissatisfied with this repeated billing discrepancy.",
+            support: "Thank you for the prompt resolution! Priya was extraordinarily helpful, polite, and addressed our technical inquiry in less than two minutes. Excellent customer service.",
+            negation: "I am not happy with the current broadband throughput, and the service is not working reliably.",
+            escalate: "I have been overcharged three consecutive billing cycles. Please transfer me directly to senior leadership or a department supervisor, or I will file an escalated consumer grievance."
+        };
+
+        function setPreset(key) {
+            const ta = document.getElementById('analyzerText');
+            if (ta && presets[key]) {
+                ta.value = presets[key];
+            }
+        }
+    </script>
 }

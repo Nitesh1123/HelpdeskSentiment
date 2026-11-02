@@ -3,65 +3,96 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Helpdesk Sentiment</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - Helpdesk Sentiment Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HelpdeskSentiment.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100 bg-light">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">📞 Helpdesk Sentiment</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2 text-dark text-decoration-none" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="fs-4 text-primary"><i class="bi bi-headset"></i></span>
+                    <span class="fw-bold">Helpdesk<span class="text-primary">Sentiment</span></span>
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house me-1"></i> Home
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Calls" asp-action="Index">Calls</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Calls" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Calls" asp-action="Index">
+                                <i class="bi bi-telephone me-1"></i> Calls
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Calls" asp-action="Create">Log call</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Calls" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")" asp-controller="Calls" asp-action="Create">
+                                <i class="bi bi-plus-circle me-1"></i> Log Call
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
+                                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Analyze" asp-action="Index">Analyse text</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Analyze" ? "active" : "")" asp-controller="Analyze" asp-action="Index">
+                                <i class="bi bi-cpu me-1"></i> Sentiment Studio
+                            </a>
                         </li>
                     </ul>
-                    <partial name="_LoginPartial" />
+                    <div class="d-flex align-items-center">
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <main class="flex-grow-1 py-4">
+        <div class="container">
             @if (TempData["Message"] is string message)
             {
-                <div class="alert alert-@(TempData["MessageType"] ?? "success") alert-dismissible fade show" role="alert">
-                    @message
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-@(TempData["MessageType"] ?? "success") alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert">
+                    <i class="bi @(TempData["MessageType"]?.ToString() == "warning" ? "bi-exclamation-triangle-fill" : "bi-check-circle-fill") fs-5"></i>
+                    <div>@message</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             }
             @RenderBody()
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <footer class="border-top footer text-muted bg-white">
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2 gap-1">
-            <span class="small">&copy; 2026 <strong>Helpdesk Sentiment Analysis</strong> — INT402 Team Project</span>
-            <span class="small text-secondary">
-                Frontend: <strong>Priyanshu Tanwar</strong> (feature/mvc-ui) &bull; ASP.NET Core MVC &bull; LocalDB
-            </span>
+    <footer class="footer mt-auto py-3 bg-white border-top">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 text-muted small">
+                <div>
+                    &copy; @DateTime.Now.Year <strong>Helpdesk Sentiment Intelligence</strong>. All rights reserved.
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-success d-inline-flex align-items-center gap-1">
+                        <span class="spinner-grow spinner-grow-sm text-success" style="width: 0.5rem; height: 0.5rem;" role="status"></span>
+                        <span class="fw-medium">Production Active</span>
+                    </span>
+                    <span class="text-secondary">&bull;</span>
+                    <a href="javascript:void(0)" class="text-decoration-none text-muted">System Status</a>
+                    <a href="javascript:void(0)" class="text-decoration-none text-muted">Privacy Policy</a>
+                    <a href="javascript:void(0)" class="text-decoration-none text-muted">Terms of Service</a>
+                </div>
+            </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

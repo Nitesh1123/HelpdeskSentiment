@@ -16,6 +16,7 @@ namespace HelpdeskSentiment.Controllers
 
         public IActionResult Index()
         {
+            ViewBag.AnalyzerName = _analyzer.Name;
             return View(new AnalyzeViewModel());
         }
 
@@ -23,6 +24,8 @@ namespace HelpdeskSentiment.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Index(AnalyzeViewModel model)
         {
+            ViewBag.AnalyzerName = _analyzer.Name;
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -37,7 +40,6 @@ namespace HelpdeskSentiment.Controllers
                 ModelState.AddModelError(nameof(model.Text), ex.Message);
             }
 
-            ViewBag.AnalyzerName = _analyzer.Name;
             return View(model);
         }
     }
