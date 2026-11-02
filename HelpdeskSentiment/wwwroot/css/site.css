@@ -185,3 +185,13 @@ main {
   border-color: #94a3b8;
   color: #0f172a;
 }
+
+/* Live database page */
+.db-live-table { max-height: 620px; overflow: auto; }
+.db-live-table thead th { position: sticky; top: 0; z-index: 1; }
+.db-live-table td { white-space: nowrap; font-size: 0.85rem; }
+.db-row-new > td { background-color: #c8f1d6 !important; }
+.db-row-changed > td { background-color: #fff0b3 !important; }
+.db-legend { display: inline-block; padding: 0 6px; border-radius: 4px; }
+.db-legend.db-row-new { background: #c8f1d6; }
+.db-legend.db-row-changed { background: #fff0b3; }

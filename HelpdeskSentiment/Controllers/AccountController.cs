@@ -1,3 +1,5 @@
+using System.Net;
+using System.Security.Claims;
 using HelpdeskSentiment.Authentication;
 using HelpdeskSentiment.Data;
 using HelpdeskSentiment.Models;
@@ -45,6 +47,7 @@ namespace HelpdeskSentiment.Controllers
             AppUser? user = _users.Validate(model.Username, model.Password);
             if (user == null)
             {
+                await RecordAsync(LoginEvent.SignInFailed, model.Username.Trim(), null, null);
                 ModelState.AddModelError(string.Empty, "Invalid username or password.");
                 return View(model);
             }
@@ -52,6 +55,7 @@ namespace HelpdeskSentiment.Controllers
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 _users.CreatePrincipal(user, CookieAuthenticationDefaults.AuthenticationScheme));
+            await RecordAsync(LoginEvent.SignIn, user.Username, user.DisplayName, user.Role);
 
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             {
@@ -125,6 +129,7 @@ namespace HelpdeskSentiment.Controllers
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 _users.CreatePrincipal(newUser, CookieAuthenticationDefaults.AuthenticationScheme));
+            await RecordAsync(LoginEvent.SignUp, newUser.Username, newUser.DisplayName, newUser.Role);
 
             TempData["Message"] = $"Welcome to Helpdesk Support Portal, {newUser.DisplayName}! Your account has been created successfully.";
             TempData["MessageType"] = "success";
@@ -141,6 +146,14 @@ namespace HelpdeskSentiment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                await RecordAsync(LoginEvent.SignOut,
+                    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown",
+                    User.Identity.Name,
+                    User.FindFirstValue(ClaimTypes.Role));
+            }
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
@@ -151,5 +164,36 @@ namespace HelpdeskSentiment.Controllers
             ViewData["Title"] = "Access denied";
             return View();
         }
+
+        // Saves one row to the LoginActivity table. Passwords are never stored.
+        private async Task RecordAsync(LoginEvent loginEvent, string username, string? displayName, string? role)
+        {
+            _db.LoginActivities.Add(new LoginActivity
+            {
+                Event = loginEvent,
+                Username = Truncate(username, 50) ?? "",
+                DisplayName = Truncate(displayName, 100),
+                Role = role,
+                IpAddress = Truncate(GetClientIp(), 45),
+                UserAgent = Truncate(Request.Headers.UserAgent.ToString(), 200),
+                OccurredAt = DateTime.Now
+            });
+            await _db.SaveChangesAsync();
+        }
+
+        // Behind the Cloudflare tunnel every request comes from this PC, so use the visitor's IP that Cloudflare forwards.
+        private string? GetClientIp()
+        {
+            IPAddress? remote = HttpContext.Connection.RemoteIpAddress;
+            if (remote != null && IPAddress.IsLoopback(remote) && Request.Headers.TryGetValue("CF-Connecting-IP", out var forwarded))
+            {
+                return forwarded.ToString();
+            }
+
+            return remote?.ToString();
+        }
+
+        private static string? Truncate(string? value, int maxLength) =>
+            value == null || value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 }

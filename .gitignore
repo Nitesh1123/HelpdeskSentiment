@@ -483,3 +483,7 @@ $RECYCLE.BIN/
 
 # Course material (not part of the project)
 syllabus/
+
+# LocalDB database files (created by the app on first run)
+**/App_Data/*.mdf
+**/App_Data/*.ldf
