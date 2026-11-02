@@ -17,6 +17,7 @@ namespace HelpdeskSentiment.Controllers
         // Only these objects can be shown. Names never come from the request, so the SQL below is safe.
         private static readonly (string Name, string Kind, string OrderBy)[] Objects =
         {
+            ("LoginActivity", "Table", "ORDER BY Id DESC"),
             ("CallRecords", "Table", "ORDER BY Id DESC"),
             ("Agents", "Table", "ORDER BY Id DESC"),
             ("vw_SentimentSummary", "View", "ORDER BY Sentiment"),

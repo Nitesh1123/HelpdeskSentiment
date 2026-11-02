@@ -12,6 +12,7 @@ namespace HelpdeskSentiment.Data
 
         public DbSet<CallRecord> CallRecords => Set<CallRecord>();
         public DbSet<Agent> Agents => Set<Agent>();
+        public DbSet<LoginActivity> LoginActivities => Set<LoginActivity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,13 @@ namespace HelpdeskSentiment.Data
                  .WithMany(a => a.Calls)
                  .HasForeignKey(c => c.AgentId)
                  .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<LoginActivity>(e =>
+            {
+                e.ToTable("LoginActivity");
+                e.Property(l => l.Event).HasConversion<string>().HasMaxLength(20);
+                e.HasIndex(l => l.OccurredAt);
             });
 
             modelBuilder.Entity<Agent>().HasData(
